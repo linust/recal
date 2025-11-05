@@ -90,10 +90,29 @@ jobs:
             timeout: 30s
           cache:
             max_size: 10
+            max_memory: 20971520
             default_ttl: 5m
             min_output_cache: 15m
+            max_ttl: 72h
           regex:
             max_execution_time: 1s
+          filters:
+            grad:
+              field: "SUMMARY"
+              pattern_template: "Grad %s"
+            loge:
+              field: "SUMMARY"
+              patterns:
+                default:
+                  template: "%s PB:"
+            confirmed_only:
+              field: "STATUS"
+              pattern: "CONFIRMED"
+              description: "Test filter"
+            installt:
+              field: "SUMMARY"
+              pattern: "INSTÄLLT"
+              description: "Test filter"
           EOF
 
           # Run container with test config
