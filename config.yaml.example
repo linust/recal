@@ -1,0 +1,37 @@
+# ReCal - Generic Configuration
+# Copy this file to config.yaml and customize for your needs
+#
+# For Par Bricole specific configuration, see: config-parbricole.yaml.example
+
+server:
+  port: 8080
+  read_timeout: 15s
+  write_timeout: 15s
+  idle_timeout: 60s
+  # Base URL for generating filter URLs in the web UI
+  base_url: "http://localhost:8080"
+
+upstream:
+  # REQUIRED: Replace with your iCal feed URL (Google Calendar, Outlook, etc.)
+  default_url: "https://calendar.google.com/calendar/ical/YOUR_CALENDAR_ID%40group.calendar.google.com/public/basic.ics"
+  timeout: 30s
+
+cache:
+  max_size: 100
+  max_memory: 20971520  # 20MB
+  default_ttl: 5m
+  min_output_cache: 15m
+  max_ttl: 72h
+
+regex:
+  max_execution_time: 1s
+
+# Custom filter definitions
+# Define your own special filters here that expand to regex patterns
+#
+# Basic filter usage (no custom definitions needed):
+#   /filter?pattern=Meeting
+#   /filter?field=SUMMARY&pattern=urgent
+#
+# To define custom filters, see config-parbricole.yaml.example for examples
+filters: {}

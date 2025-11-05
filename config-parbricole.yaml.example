@@ -1,0 +1,74 @@
+# Par Bricole Specific Configuration
+# This is a specialized configuration for filtering Swedish Freemason (Par Bricole) calendar events
+# Copy this file to config.yaml and fill in your actual calendar URL
+
+server:
+  port: 8080
+  read_timeout: 15s
+  write_timeout: 15s
+  idle_timeout: 60s
+  base_url: "http://localhost:8080"
+
+upstream:
+  # REQUIRED: Your Par Bricole Google Calendar iCal URL
+  default_url: "https://calendar.google.com/calendar/ical/YOUR_CALENDAR_ID%40group.calendar.google.com/public/basic.ics"
+  timeout: 30s
+
+cache:
+  max_size: 100
+  max_memory: 20971520  # 20MB
+  default_ttl: 5m
+  min_output_cache: 15m
+  max_ttl: 72h
+
+regex:
+  max_execution_time: 1s
+
+# Par Bricole specific filter expansions
+filters:
+  # Grad filter: Filter events by masonic degree (1-10)
+  # Usage: ?Grad=4 keeps degrees 1-4, filters out 5-10
+  grad:
+    field: "SUMMARY"
+    pattern_template: "Grad %s"
+
+  # Loge filter: Filter events by lodge name
+  # Usage: ?Loge=Göta,Borås filters out those lodges
+  loge:
+    field: "SUMMARY"
+    patterns:
+      # Special pattern for Moderlogen (Mother Lodge)
+      "Moderlogen":
+        template: "PB, %s:"
+      # Default pattern for other lodges
+      # Most lodges use format: "Lodge Name PB:"
+      default:
+        template: "%s PB:"
+
+  # Filter to keep only confirmed events
+  # Usage: ?ConfirmedOnly=true
+  confirmed_only:
+    field: "STATUS"
+    pattern: "CONFIRMED"
+    description: "Remove events without STATUS=CONFIRMED"
+
+  # Filter to remove cancelled events (Swedish: INSTÄLLT)
+  # Usage: ?Installt=true  (note: removes INSTÄLLT events)
+  installt:
+    field: "SUMMARY"
+    pattern: "INSTÄLLT"
+    description: "Remove events with INSTÄLLT in summary"
+
+# Example URLs for Par Bricole calendar:
+#
+# Keep only degrees 1-4, remove unconfirmed and cancelled events:
+# /filter?Grad=4&ConfirmedOnly=true&Installt=true
+#
+# Remove specific lodges (Göta and Borås):
+# /filter?Loge=Göta,Borås
+#
+# Combine multiple filters:
+# /filter?Grad=3&Loge=Sundsvalls&ConfirmedOnly=true&Installt=true
+#
+# Debug mode to see what's being filtered:
+# /filter?Grad=4&debug=true

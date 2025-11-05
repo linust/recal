@@ -1,0 +1,40 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base"
+  ],
+  "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["golang", "gcr.io/distroless/static-debian12"],
+      "groupName": "docker-base-images"
+    },
+    {
+      "matchDatasources": ["go"],
+      "groupName": "go-dependencies",
+      "schedule": ["before 6am on monday"]
+    }
+  ],
+  "docker": {
+    "enabled": true,
+    "pinDigests": true
+  },
+  "golang": {
+    "enabled": true
+  },
+  "prConcurrentLimit": 3,
+  "prHourlyLimit": 2,
+  "labels": ["dependencies"],
+  "assignees": [],
+  "reviewers": [],
+  "schedule": ["before 6am on monday"],
+  "timezone": "Europe/Stockholm",
+  "automerge": false,
+  "platformAutomerge": false,
+  "rangeStrategy": "bump",
+  "semanticCommits": "enabled",
+  "commitMessagePrefix": "chore(deps):",
+  "commitMessageAction": "update",
+  "commitMessageTopic": "{{depName}}",
+  "separateMinorPatch": true
+}

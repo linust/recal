@@ -1,0 +1,27 @@
+# Binary
+/bin/
+/ical-filter
+/ical-proxy-filter
+/recal
+
+# Configuration with secrets (DO NOT COMMIT)
+config.yaml
+config.yaml.backup
+*.yaml.backup
+
+# Allow example config
+!config.yaml.example
+
+# Docker
+*.tar.gz
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

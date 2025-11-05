@@ -1,0 +1,27 @@
+services:
+  recal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: recal:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount config.yaml from host (keep secrets out of image)
+      - ./config.yaml:/app/config.yaml:ro
+    # Uncomment to override config with environment variables:
+    # environment:
+    #   PORT: "8080"
+    #   BASE_URL: "http://localhost:8080"
+    #   DEFAULT_UPSTREAM: "https://calendar.google.com/calendar/ical/..."
+    #   CACHE_MAX_SIZE: "100"
+    #   CACHE_DEFAULT_TTL: "5m"
+    #   CACHE_MIN_OUTPUT: "15m"
+    #   UPSTREAM_TIMEOUT: "30s"
+    #   MAX_REGEX_TIME: "1s"
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
