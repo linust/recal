@@ -3,7 +3,7 @@
 # Docker image settings
 DOCKER_IMAGE := recal
 DOCKER_TAG := latest
-BUILDER_IMAGE := golang:1.25.3-alpine3.22
+BUILDER_IMAGE := golang:1.21-alpine
 
 # Binary name and location
 BINARY := bin/recal

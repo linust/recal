@@ -1,6 +1,6 @@
 module github.com/linus/recal
 
-go 1.25.3
+go 1.21
 
 require (
 	github.com/emersion/go-ical v0.0.0-20250609112844-439c63cef608
