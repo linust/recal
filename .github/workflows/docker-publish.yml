@@ -68,6 +68,7 @@ jobs:
 
       - name: Build and push Docker image
         if: github.event_name != 'pull_request'
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -80,13 +81,29 @@ jobs:
       - name: Test Docker image
         if: github.event_name != 'pull_request'
         run: |
-          # Create minimal config for testing
+          # Start simple HTTP server to serve test data
+          cd testdata
+          python3 -m http.server 8888 &
+          HTTP_SERVER_PID=$!
+          cd ..
+
+          # Wait for HTTP server to start
+          sleep 2
+
+          # Verify test data is accessible
+          curl -f http://localhost:8888/sample-feed.ics > /dev/null || {
+            echo "Failed to access test data on HTTP server"
+            kill $HTTP_SERVER_PID
+            exit 1
+          }
+
+          # Create test config pointing to local HTTP server
           cat > test-config.yaml <<EOF
           server:
             port: 8080
             base_url: "http://localhost:8080"
           upstream:
-            default_url: "https://example.com/calendar.ics"
+            default_url: "http://172.17.0.1:8888/sample-feed.ics"
             timeout: 30s
           cache:
             max_size: 10
@@ -115,9 +132,9 @@ jobs:
               description: "Test filter"
           EOF
 
-          # Run container with test config
+          # Run container with test config (using host network to access localhost:8888)
           docker run -d \
-            -p 8080:8080 \
+            --network host \
             -v $(pwd)/test-config.yaml:/app/config.yaml:ro \
             --name test-container \
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
@@ -126,19 +143,91 @@ jobs:
           sleep 5
 
           # Test health endpoint
-          curl -f http://localhost:8080/health || exit 1
+          echo "Testing /health endpoint..."
+          curl -f http://localhost:8080/health || {
+            echo "Health check failed"
+            docker logs test-container
+            docker stop test-container
+            docker rm test-container
+            kill $HTTP_SERVER_PID
+            exit 1
+          }
 
           # Test status endpoint
-          curl -f http://localhost:8080/status || exit 1
+          echo "Testing /status endpoint..."
+          curl -f http://localhost:8080/status > /dev/null || {
+            echo "Status check failed"
+            docker logs test-container
+            docker stop test-container
+            docker rm test-container
+            kill $HTTP_SERVER_PID
+            exit 1
+          }
+
+          # Test actual filtering - fetch upstream feed
+          echo "Testing /filter endpoint (no filters)..."
+          curl -f "http://localhost:8080/filter" -o filtered.ics || {
+            echo "Filter endpoint failed"
+            docker logs test-container
+            docker stop test-container
+            docker rm test-container
+            kill $HTTP_SERVER_PID
+            exit 1
+          }
+
+          # Verify we got a valid iCal file
+          grep -q "BEGIN:VCALENDAR" filtered.ics || {
+            echo "Output is not a valid iCal file"
+            cat filtered.ics
+            docker stop test-container
+            docker rm test-container
+            kill $HTTP_SERVER_PID
+            exit 1
+          }
+
+          # Test Grad filter
+          echo "Testing Grad filter..."
+          curl -f "http://localhost:8080/filter?Grad=3" -o grad-filtered.ics || {
+            echo "Grad filter failed"
+            docker logs test-container
+            docker stop test-container
+            docker rm test-container
+            kill $HTTP_SERVER_PID
+            exit 1
+          }
+
+          # Test debug mode
+          echo "Testing debug mode..."
+          curl -f "http://localhost:8080/filter?Grad=3&debug=true" > debug.html || {
+            echo "Debug mode failed"
+            docker logs test-container
+            docker stop test-container
+            docker rm test-container
+            kill $HTTP_SERVER_PID
+            exit 1
+          }
+
+          # Verify debug output contains expected content
+          grep -q "Filter Statistics" debug.html || {
+            echo "Debug output missing expected content"
+            cat debug.html
+            docker stop test-container
+            docker rm test-container
+            kill $HTTP_SERVER_PID
+            exit 1
+          }
+
+          echo "All tests passed!"
 
           # Cleanup
           docker stop test-container
           docker rm test-container
+          kill $HTTP_SERVER_PID
 
       - name: Generate artifact attestation
         if: github.event_name != 'pull_request'
         uses: actions/attest-build-provenance@v1
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          subject-digest: ${{ steps.meta.outputs.digest }}
+          subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
