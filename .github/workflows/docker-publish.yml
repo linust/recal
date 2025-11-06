@@ -103,7 +103,7 @@ jobs:
             port: 8080
             base_url: "http://localhost:8080"
           upstream:
-            default_url: "http://172.17.0.1:8888/sample-feed.ics"
+            default_url: "http://localhost:8888/sample-feed.ics"
             timeout: 30s
           cache:
             max_size: 10
