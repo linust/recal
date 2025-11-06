@@ -452,7 +452,7 @@ END:VCALENDAR`)
 		w.Header().Set("Content-Type", "text/calendar")
 		w.Header().Set("Cache-Control", "public, max-age=3600")
 		w.WriteHeader(http.StatusOK)
-		w.Write(data)
+		_, _ = w.Write(data)
 	}))
 }
 

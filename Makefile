@@ -1,4 +1,4 @@
-.PHONY: help build build-local test test-local test-coverage test-integration run clean docker-build docker-run docker-clean fmt vet lint ci-test
+.PHONY: help build build-local test test-local test-coverage test-integration run clean docker-build docker-run docker-clean fmt vet lint ci-test test-ci-local watch-ci
 
 # Docker image settings
 DOCKER_IMAGE := recal
@@ -11,21 +11,24 @@ BINARY := bin/recal
 # Default target
 help:
 	@echo "Available targets:"
-	@echo "  build         - Build the binary using Docker (reproducible)"
-	@echo "  build-local   - Build the binary using local Go (faster, less reproducible)"
-	@echo "  test          - Run all tests using Docker (reproducible)"
-	@echo "  test-local    - Run all tests using local Go (faster)"
-	@echo "  test-coverage - Run tests with coverage report"
+	@echo "  build           - Build the binary using Docker (reproducible)"
+	@echo "  build-local     - Build the binary using local Go (faster, less reproducible)"
+	@echo "  test            - Run all tests using Docker (reproducible)"
+	@echo "  test-local      - Run all tests using local Go (faster)"
+	@echo "  test-coverage   - Run tests with coverage report"
 	@echo "  test-integration - Run integration tests against live server"
-	@echo "  run           - Run the application using Docker"
-	@echo "  clean         - Remove build artifacts"
-	@echo "  docker-build  - Build Docker image"
-	@echo "  docker-run    - Run Docker container"
-	@echo "  docker-clean  - Remove Docker images"
-	@echo "  fmt           - Format code using Docker"
-	@echo "  vet           - Run go vet using Docker"
-	@echo "  lint          - Run golangci-lint using Docker"
-	@echo "  ci-test       - Run CI test suite (used by GitHub Actions)"
+	@echo "  test-ci-local   - Run CI integration tests locally (before pushing)"
+	@echo "  run             - Run the application using Docker"
+	@echo "  clean           - Remove build artifacts"
+	@echo "  docker-build    - Build Docker image"
+	@echo "  docker-run      - Run Docker container"
+	@echo "  docker-clean    - Remove Docker images"
+	@echo "  fmt             - Format code using Docker"
+	@echo "  vet             - Run go vet using Docker"
+	@echo "  lint            - Run golangci-lint using Docker"
+	@echo "  ci-test         - Run CI test suite (used by GitHub Actions)"
+	@echo "  watch-ci        - Watch CI build and auto-download logs on failure"
+	@echo "  dev             - Quick dev cycle: test-local + build-local"
 
 # Build the binary using Docker for reproducibility
 build:
@@ -165,3 +168,12 @@ dev-setup:
 .PHONY: dev
 dev: test-local build-local
 	@echo "Development build complete!"
+
+# Run local CI integration tests (mimics GitHub Actions)
+test-ci-local:
+	@echo "Running local CI integration tests..."
+	@./test-local.sh
+
+# Watch GitHub Actions CI and auto-download logs on failure
+watch-ci:
+	@./watch-ci.sh

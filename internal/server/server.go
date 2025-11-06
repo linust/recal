@@ -163,7 +163,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", fmt.Sprintf("public, max-age=%d", int(cacheDuration.Seconds())))
 	w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write(output)
+	_, _ = w.Write(output)
 }
 
 // DebugHTTP handles HTTP requests for debug mode (HTML output)
@@ -228,7 +228,7 @@ func (s *Server) DebugHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(output))
+	_, _ = w.Write([]byte(output))
 }
 
 // Health handles health check requests
