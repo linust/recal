@@ -562,10 +562,11 @@ func TestGetLodgesEndpoint(t *testing.T) {
 	t.Skip("Integration test - requires actual HTTP server with upstream feed")
 }
 
-// TestRootRedirectsToConfigPage tests that accessing /filter with no params redirects to /
-// Validates: Redirect behavior when no filters specified
+// TestRootRedirectsToConfigPage tests that accessing /filter with no params and no default URL redirects to /
+// Validates: Redirect behavior when no filters specified and no default upstream
 func TestRootRedirectsToConfigPage(t *testing.T) {
 	cfg := getTestConfig()
+	cfg.Upstream.DefaultURL = "" // No default URL configured
 	server := New(cfg)
 
 	req := httptest.NewRequest("GET", "/filter", nil)

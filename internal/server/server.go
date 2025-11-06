@@ -88,17 +88,17 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// If no filters specified and no upstream, show configuration page
+	// Use default upstream URL if none specified
+	if params.Upstream == "" {
+		params.Upstream = s.cfg.Upstream.DefaultURL
+	}
+
+	// If no filters specified and no upstream available, show configuration page
 	if params.Upstream == "" && len(params.Filters) == 0 &&
 		params.SpecialFilters.Grad == "" && params.SpecialFilters.Loge == "" &&
 		!params.SpecialFilters.RemoveUnconfirmed && !params.SpecialFilters.RemoveInstallt {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
-	}
-
-	// Use default upstream URL if none specified
-	if params.Upstream == "" {
-		params.Upstream = s.cfg.Upstream.DefaultURL
 	}
 
 	// Create cache key for filtered result

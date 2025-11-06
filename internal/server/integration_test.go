@@ -318,7 +318,7 @@ func setupTestServer(t *testing.T) *httptest.Server {
 			BaseURL:      "http://localhost:8080",
 		},
 		Upstream: config.UpstreamConfig{
-			DefaultURL: "https://example.com/calendar.ics",
+			DefaultURL: "", // No default URL - will redirect to config page
 			Timeout:    30 * time.Second,
 		},
 		Cache: config.CacheConfig{
