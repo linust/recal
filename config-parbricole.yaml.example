@@ -38,8 +38,9 @@ filters:
     field: "SUMMARY"
     patterns:
       # Special pattern for Moderlogen (Mother Lodge)
+      # NOTE: iCal escapes commas with backslash, so pattern must match "PB\, Moderlogen:"
       "Moderlogen":
-        template: "PB, %s:"
+        template: "PB\\, %s:"
       # Default pattern for other lodges
       # Most lodges use format: "Lodge Name PB:"
       default:

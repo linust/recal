@@ -135,6 +135,17 @@ func (e *Engine) AddLogeFilter(lodges string) error {
 		// Replace %s with the lodge name
 		pattern := strings.Replace(template, "%s", name, -1)
 		patterns = append(patterns, regexp.QuoteMeta(pattern))
+
+		// IMPORTANT: Some lodges (like Moderlogen) have events in BOTH formats:
+		// 1. Special pattern (e.g., "PB\, Moderlogen:")
+		// 2. Default pattern (e.g., "Moderlogen PB:")
+		// We need to check if this lodge has a special pattern different from default,
+		// and if so, also add the default pattern to catch all variations.
+		defaultTemplate := e.cfg.Filters.Loge.Patterns["default"].Template
+		if template != defaultTemplate {
+			defaultPattern := strings.Replace(defaultTemplate, "%s", name, -1)
+			patterns = append(patterns, regexp.QuoteMeta(defaultPattern))
+		}
 	}
 
 	if len(patterns) == 0 {
