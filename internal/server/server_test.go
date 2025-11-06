@@ -509,7 +509,7 @@ func TestConfigPageEndpoint(t *testing.T) {
 
 	// Verify essential elements of the configuration page
 	expectedElements := []string{
-		"iCal Filter",
+		"ReCal",
 		"Konfigurera",
 		"Grad",
 		"Loger",

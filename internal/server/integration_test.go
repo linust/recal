@@ -45,7 +45,7 @@ func TestIntegrationConfigPage(t *testing.T) {
 
 	// Verify the configuration page contains expected elements
 	requiredElements := []string{
-		"iCal Filter",
+		"ReCal",
 		"Konfigurera",
 		"<select id=\"grad-select\">",
 		"<div class=\"checkbox-list\" id=\"loge-checkboxes\">",
@@ -232,7 +232,7 @@ func TestIntegrationFilterWithTestData(t *testing.T) {
 			checkBody: func(t *testing.T, body string) {
 				// Should have debug HTML elements
 				requiredElements := []string{
-					"iCal Filter Debug Report",
+					"ReCal Debug Report",
 					"Summary Statistics",
 					"Total events in upstream:",
 					"Active Filters",

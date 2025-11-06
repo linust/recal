@@ -30,7 +30,7 @@ func main() {
 	// Create and start server
 	srv := server.New(cfg)
 
-	log.Printf("Starting iCal Filter server...")
+	log.Printf("Starting ReCal server...")
 	log.Printf("Endpoints:")
 	log.Printf("  - /filter  - Filter upstream iCal feed")
 	log.Printf("  - /health  - Health check")

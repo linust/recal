@@ -33,5 +33,4 @@ regex:
 #   /filter?pattern=Meeting
 #   /filter?field=SUMMARY&pattern=urgent
 #
-# To define custom filters, see config-parbricole.yaml.example for examples
 filters: {}

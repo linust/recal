@@ -23,7 +23,7 @@ import (
 	"github.com/linus/recal/internal/parser"
 )
 
-// Server is the HTTP server for the iCal filter application
+// Server is the HTTP server for the ReCal application
 type Server struct {
 	cfg            *config.Config
 	upstreamCache  *cache.Cache
@@ -265,7 +265,7 @@ func (s *Server) Status(w http.ResponseWriter, r *http.Request) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iCal Filter - Status</title>
+    <title>ReCal - Status</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
@@ -333,7 +333,7 @@ func (s *Server) Status(w http.ResponseWriter, r *http.Request) {
     </style>
 </head>
 <body>
-    <h1>iCal Filter - Status</h1>
+    <h1>ReCal - Status</h1>
 
     <h2>Request Metrics</h2>
     <div class="stats-grid">
@@ -742,7 +742,7 @@ func (s *Server) generateDebugHTML(original, filtered *parser.Calendar, matches 
 <html>
 <head>
 	<meta charset="UTF-8">
-	<title>iCal Filter Debug</title>
+	<title>ReCal Debug</title>
 	<style>
 		body { font-family: Arial, sans-serif; margin: 20px; }
 		h1 { color: #333; }
@@ -756,7 +756,7 @@ func (s *Server) generateDebugHTML(original, filtered *parser.Calendar, matches 
 	</style>
 </head>
 <body>
-	<h1>iCal Filter Debug Report</h1>
+	<h1>ReCal Debug Report</h1>
 
 	<div class="stats">
 		<h2>Summary Statistics</h2>

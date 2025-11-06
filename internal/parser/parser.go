@@ -130,7 +130,7 @@ func (c *Calendar) Serialize(w io.Writer) error {
 	} else {
 		// Set default properties if we don't have the raw calendar
 		outCal.Props.SetText(ical.PropVersion, "2.0")
-		outCal.Props.SetText(ical.PropProductID, "-//iCal Filter//EN")
+		outCal.Props.SetText(ical.PropProductID, "-//ReCal//EN")
 	}
 
 	// Add all events

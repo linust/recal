@@ -1,11 +1,13 @@
 services:
   recal:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: recal:latest
-    ports:
-      - "8080:8080"
+    # Use published image from GitHub Container Registry
+    image: ghcr.io/linust/recal:latest
+    pull_policy: always
+    # Only expose to localhost - Caddy will proxy from outside
+    #ports:
+    #  - "127.0.0.1:8080:8080"
+    expose:
+      - 8080
     volumes:
       # Mount config.yaml from host (keep secrets out of image)
       - ./config.yaml:/app/config.yaml:ro
