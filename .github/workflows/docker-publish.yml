@@ -135,6 +135,7 @@ jobs:
           # Run container with test config (using host network to access localhost:8888)
           docker run -d \
             --network host \
+            -e DISABLE_SSRF_PROTECTION=true \
             -v $(pwd)/test-config.yaml:/app/config.yaml:ro \
             --name test-container \
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}

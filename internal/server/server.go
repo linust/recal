@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -34,6 +35,16 @@ type Server struct {
 
 // New creates a new server
 func New(cfg *config.Config) *Server {
+	// Check if SSRF protection should be disabled (for testing only)
+	// This allows CI tests to access localhost for test data
+	var f *fetcher.Fetcher
+	if os.Getenv("DISABLE_SSRF_PROTECTION") == "true" {
+		log.Println("WARNING: SSRF protection disabled (test mode)")
+		f = fetcher.NewTestFetcher(cfg)
+	} else {
+		f = fetcher.NewFetcher(cfg)
+	}
+
 	return &Server{
 		cfg: cfg,
 		upstreamCache: cache.NewCacheWithMemoryLimit(
@@ -50,7 +61,7 @@ func New(cfg *config.Config) *Server {
 			cfg.Cache.MaxMemory*2, // Double memory for filtered cache
 			cfg.Cache.MaxTTL,
 		),
-		fetcher:        fetcher.NewFetcher(cfg),
+		fetcher:        f,
 		requestMetrics: metrics.NewRequestMetrics(),
 		startTime:      time.Now(),
 	}
