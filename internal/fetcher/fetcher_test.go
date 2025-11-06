@@ -33,7 +33,7 @@ func TestFetch(t *testing.T) {
 		w.Header().Set("Last-Modified", "Mon, 01 Jan 2025 00:00:00 GMT")
 		w.Header().Set("Cache-Control", "max-age=300")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Test response body"))
+		_, _ = w.Write([]byte("Test response body"))
 	}))
 	defer server.Close()
 
@@ -136,7 +136,7 @@ func TestFetchConditionalModified(t *testing.T) {
 		// Content has changed, return new content
 		w.Header().Set("ETag", `"new-etag"`)
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("New content"))
+		_, _ = w.Write([]byte("New content"))
 	}))
 	defer server.Close()
 
@@ -282,7 +282,7 @@ func TestFetchRedirect(t *testing.T) {
 			http.Redirect(w, r, "/redirect", http.StatusFound)
 		} else {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("Final destination"))
+			_, _ = w.Write([]byte("Final destination"))
 		}
 	}))
 	defer server.Close()

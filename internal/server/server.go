@@ -660,9 +660,7 @@ func createCacheKey(params *Params) string {
 
 	// Add filters
 	for _, f := range params.Filters {
-		for _, field := range f.Fields {
-			components = append(components, field)
-		}
+		components = append(components, f.Fields...)
 		components = append(components, f.Pattern)
 	}
 
@@ -902,9 +900,7 @@ func (s *Server) GetLodges(w http.ResponseWriter, r *http.Request) {
 					lodge = strings.TrimSpace(lodge[idx+2:])
 				}
 				// Remove "INSTÄLLT: " prefix if present
-				if strings.HasPrefix(lodge, "INSTÄLLT: ") {
-					lodge = strings.TrimPrefix(lodge, "INSTÄLLT: ")
-				}
+				lodge = strings.TrimPrefix(lodge, "INSTÄLLT: ")
 				if lodge != "" {
 					lodgeMap[lodge] = true
 				}
@@ -926,7 +922,7 @@ func (s *Server) GetLodges(w http.ResponseWriter, r *http.Request) {
 	// Return JSON
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "public, max-age=900") // Cache for 15 minutes
-	json.NewEncoder(w).Encode(map[string][]string{"lodges": lodges})
+	_ = json.NewEncoder(w).Encode(map[string][]string{"lodges": lodges})
 }
 
 // sortSwedish sorts strings using Swedish alphabetical order (å, ä, ö after z)
