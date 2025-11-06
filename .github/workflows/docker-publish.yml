@@ -209,7 +209,7 @@ jobs:
           }
 
           # Verify debug output contains expected content
-          grep -q "Filter Statistics" debug.html || {
+          grep -q "Summary Statistics" debug.html || {
             echo "Debug output missing expected content"
             cat debug.html
             docker stop test-container
