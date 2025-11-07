@@ -16,7 +16,8 @@ A lightweight Go proxy that filters iCal feeds using regular expressions. Downlo
 
 ## Future Development
 
--- **Merging of feeds**: Mutliple upstream iCal feeds are merged into one continious stream.
+- **Named Feeds**: Support for a named slug that expands to a feed query. This to allow adjustment of a feed definition without requiring reconfiguration in clients consuming the feed.
+- **Merging of Feeds**: Mutliple upstream iCal feeds are merged into one continious stream.
 
 ## Quick Start
 
