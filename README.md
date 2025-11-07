@@ -2,7 +2,7 @@
 
 A lightweight Go proxy that filters iCal feeds using regular expressions. Download any iCal feed, apply regex-based filters, and serve the filtered results.
 
-**ReCal** = **Re**gex **Cal**endar Filter
+**ReCal** = **Re**gex **Cal**endar Filter or Re-Calendar to signify that what this does is to adjust calendar feeds. 
 
 ## Features
 
@@ -12,6 +12,11 @@ A lightweight Go proxy that filters iCal feeds using regular expressions. Downlo
 - **Debug Mode**: HTML output showing filtered events and match details
 - **Security**: Runs as non-root in distroless container with SSRF protection
 - **Reproducible Builds**: Versioned build environment ensures identical binaries across platforms
+
+
+## Future Development
+
+-- **Merging of feeds**: Mutliple upstream iCal feeds are merged into one continious stream.
 
 ## Quick Start
 
