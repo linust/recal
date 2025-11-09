@@ -127,7 +127,7 @@ lint:
 	@docker run --rm \
 		-v "$(PWD):/workspace" \
 		-w /workspace \
-		golangci/golangci-lint:v1.55-alpine \
+		golangci/golangci-lint:latest \
 		golangci-lint run -v
 
 # Run tests with coverage

@@ -249,7 +249,7 @@ func (s *Server) Health(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, `{"status":"ok","upstream_cache":%d,"filtered_cache":%d}`,
+	_, _ = fmt.Fprintf(w, `{"status":"ok","upstream_cache":%d,"filtered_cache":%d}`,
 		stats.Entries, filteredStats.Entries)
 }
 
@@ -422,7 +422,7 @@ func (s *Server) Status(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(html))
+	_, _ = w.Write([]byte(html))
 }
 
 // formatBytes formats bytes as human-readable string
@@ -524,7 +524,7 @@ func (s *Server) serveFromCache(w http.ResponseWriter, entry *cache.Entry, debug
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("X-Cache", "HIT")
 	w.WriteHeader(http.StatusOK)
-	w.Write(entry.Data)
+	_, _ = w.Write(entry.Data)
 }
 
 // Params represents parsed URL parameters

@@ -74,7 +74,7 @@ func (f *Fetcher) Fetch(ctx context.Context, urlStr string) (*Response, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch URL: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
@@ -127,7 +127,7 @@ func (f *Fetcher) FetchConditional(ctx context.Context, urlStr string, etag stri
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to fetch URL: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Check for 304 Not Modified
 	if resp.StatusCode == http.StatusNotModified {

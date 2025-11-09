@@ -25,7 +25,7 @@ func TestIntegrationConfigPage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to GET /: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Status = %d, want %d", resp.StatusCode, http.StatusOK)
@@ -71,7 +71,7 @@ func TestIntegrationHealthEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to GET /health: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Status = %d, want %d", resp.StatusCode, http.StatusOK)
@@ -254,7 +254,7 @@ func TestIntegrationFilterWithTestData(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to GET %s: %v", tt.url, err)
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != tt.wantStatusCode {
 				t.Errorf("Status = %d, want %d", resp.StatusCode, tt.wantStatusCode)
@@ -292,7 +292,7 @@ func TestIntegrationCacheHeaders(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to GET /query: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	cacheControl := resp.Header.Get("Cache-Control")
 	if cacheControl == "" {
@@ -500,7 +500,7 @@ func TestIntegrationDebugRedirect(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to GET %s: %v", tt.oldURL, err)
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			// Should be a 301 Moved Permanently redirect
 			if resp.StatusCode != http.StatusMovedPermanently {
@@ -553,7 +553,7 @@ func TestIntegrationServerStartup(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to GET %s: %v", ep.path, err)
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != ep.expectedStatus {
 				body, _ := io.ReadAll(resp.Body)
