@@ -27,7 +27,9 @@ RUN go test -v ./...
 # CGO_ENABLED=0 ensures static linking (no dynamic dependencies)
 # -ldflags="-w -s" strips debug info for smaller binary
 # -trimpath removes local path information for reproducibility
+# -buildvcs=false disables VCS stamping (not available in shallow clones)
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -buildvcs=false \
     -ldflags="-w -s" \
     -trimpath \
     -o /build/recal \

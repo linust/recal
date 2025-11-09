@@ -45,7 +45,7 @@ build:
 build-local:
 	@echo "Building binary using local Go..."
 	@mkdir -p bin
-	go build -o $(BINARY) ./cmd/recal
+	go build -buildvcs=false -o $(BINARY) ./cmd/recal
 
 # Run tests using Docker
 test:
