@@ -199,18 +199,20 @@ const configPageTemplate = `<!DOCTYPE html>
       <button id="download-ical-btn" class="btn-secondary">
         📥 Ladda ner iCal
       </button>
+      <button id="preview-btn" class="btn-secondary">
+        🔍 Förhandsgranska
+      </button>
     </div>
 
-    <!-- Future Features -->
-    <div class="future-section">
-      <h4>🚧 Kommer snart: Kalenderintegration</h4>
-      <p>Direkta prenumerationslänkar för:</p>
-      <ul>
-        <li>Apple Calendar (macOS/iOS)</li>
-        <li>Outlook.com</li>
-        <li>Google Calendar</li>
-        <li>Mobila kalenderapppar</li>
-      </ul>
+    <!-- Calendar App Integration -->
+    <div class="filter-section">
+      <h3>Öppna i kalenderapp</h3>
+      <div class="action-buttons" id="calendar-apps">
+        <!-- Populated by JavaScript based on platform detection -->
+      </div>
+      <p class="help-text">
+        Välj en kalenderapp för att prenumerera på den filtrerade kalendern
+      </p>
     </div>
   </div>
 
@@ -342,8 +344,92 @@ const configPageTemplate = `<!DOCTYPE html>
       generateURL();
     });
 
-    // Load lodges on page load
+    // Preview button - open in debug/preview mode
+    document.getElementById('preview-btn').addEventListener('click', () => {
+      const currentURL = new URL(generateURL());
+      const previewURL = currentURL.origin + '/filter/preview' + currentURL.search;
+      window.open(previewURL, '_blank');
+    });
+
+    // Platform detection
+    function detectPlatform() {
+      const ua = navigator.userAgent;
+      const platform = navigator.platform;
+
+      return {
+        isMac: /Mac/.test(platform),
+        isIOS: /iPhone|iPad|iPod/.test(platform),
+        isWindows: /Win/.test(platform),
+        isAndroid: /Android/.test(ua)
+      };
+    }
+
+    // Generate calendar app buttons based on platform
+    function setupCalendarApps() {
+      const platform = detectPlatform();
+      const container = document.getElementById('calendar-apps');
+      container.innerHTML = '';
+
+      // Get current filter URL
+      function getSubscriptionURL() {
+        const currentURL = generateURL();
+        // Convert https:// to webcal:// for calendar subscription
+        return currentURL.replace(/^https?:\/\//, 'webcal://');
+      }
+
+      function getHTTPSURL() {
+        return generateURL();
+      }
+
+      // Apple Calendar (macOS/iOS)
+      if (platform.isMac || platform.isIOS) {
+        const btn = document.createElement('button');
+        btn.className = 'btn-secondary';
+        btn.innerHTML = '📅 Apple Calendar';
+        btn.onclick = () => {
+          window.location.href = getSubscriptionURL();
+        };
+        container.appendChild(btn);
+      }
+
+      // Google Calendar (all platforms)
+      const googleBtn = document.createElement('button');
+      googleBtn.className = 'btn-secondary';
+      googleBtn.innerHTML = '🌐 Google Calendar';
+      googleBtn.onclick = () => {
+        const httpsURL = encodeURIComponent(getHTTPSURL());
+        window.open('https://calendar.google.com/calendar/render?cid=' + httpsURL, '_blank');
+      };
+      container.appendChild(googleBtn);
+
+      // Outlook.com (all platforms)
+      const outlookBtn = document.createElement('button');
+      outlookBtn.className = 'btn-secondary';
+      outlookBtn.innerHTML = '📧 Outlook.com';
+      outlookBtn.onclick = () => {
+        const httpsURL = encodeURIComponent(getHTTPSURL());
+        window.open('https://outlook.live.com/calendar/0/addfromweb?url=' + httpsURL, '_blank');
+      };
+      container.appendChild(outlookBtn);
+
+      // Generic webcal link (all platforms)
+      const webcalBtn = document.createElement('button');
+      webcalBtn.className = 'btn-secondary';
+      webcalBtn.innerHTML = '📱 Annan app (webcal://)';
+      webcalBtn.onclick = () => {
+        const webcalURL = getSubscriptionURL();
+        navigator.clipboard.writeText(webcalURL).then(() => {
+          alert('webcal:// URL kopierad till urklipp!\\n\\nKlistra in i din kalenderapp.');
+        }).catch(() => {
+          prompt('Kopiera denna webcal:// URL till din kalenderapp:', webcalURL);
+        });
+      };
+      container.appendChild(webcalBtn);
+    }
+
+    // Load lodges and setup calendar apps on page load
     loadLodges();
+    setupCalendarApps();
   </script>
 </body>
 </html>

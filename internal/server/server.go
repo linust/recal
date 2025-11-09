@@ -223,7 +223,7 @@ func (s *Server) DebugHTTP(w http.ResponseWriter, r *http.Request) {
 	filteredCal, matches := engine.Apply(cal)
 
 	// Generate debug HTML
-	output := s.generateDebugHTML(originalCal, filteredCal, matches, engine)
+	output := s.generateDebugHTML(originalCal, filteredCal, matches, engine, r.URL.RawQuery)
 
 	// No caching for debug mode
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -746,8 +746,14 @@ func (s *Server) buildFilters(engine *filter.Engine, params *Params) error {
 }
 
 // generateDebugHTML generates debug mode HTML output
-func (s *Server) generateDebugHTML(original, filtered *parser.Calendar, matches []filter.MatchResult, engine *filter.Engine) string {
+func (s *Server) generateDebugHTML(original, filtered *parser.Calendar, matches []filter.MatchResult, engine *filter.Engine, queryString string) string {
 	stats := filter.GetStats(original, filtered)
+
+	// Build back-to-config URL
+	configURL := "/"
+	if queryString != "" {
+		configURL += "?" + queryString
+	}
 
 	html := `<!DOCTYPE html>
 <html>
@@ -755,9 +761,11 @@ func (s *Server) generateDebugHTML(original, filtered *parser.Calendar, matches 
 	<meta charset="UTF-8">
 	<title>ReCal Debug</title>
 	<style>
-		body { font-family: Arial, sans-serif; margin: 20px; }
+		body { font-family: Arial, sans-serif; margin: 20px; max-width: 1200px; margin: 20px auto; }
 		h1 { color: #333; }
 		h2 { color: #666; margin-top: 30px; }
+		.back-link { display: inline-block; margin-bottom: 20px; padding: 10px 20px; background: #0066cc; color: white; text-decoration: none; border-radius: 4px; }
+		.back-link:hover { background: #0052a3; }
 		.stats { background: #f0f0f0; padding: 15px; border-radius: 5px; }
 		.stats p { margin: 5px 0; }
 		.filter { background: #e8f4f8; padding: 10px; margin: 5px 0; border-left: 3px solid #0066cc; }
@@ -767,6 +775,7 @@ func (s *Server) generateDebugHTML(original, filtered *parser.Calendar, matches 
 	</style>
 </head>
 <body>
+	<a href="` + htmlutil.EscapeString(configURL) + `" class="back-link">← Tillbaka till konfiguration</a>
 	<h1>ReCal Debug Report</h1>
 
 	<div class="stats">
