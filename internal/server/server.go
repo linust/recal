@@ -231,6 +231,16 @@ func (s *Server) DebugHTTP(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(output))
 }
 
+// DebugRedirect redirects /debug to /filter/preview for backward compatibility
+func (s *Server) DebugRedirect(w http.ResponseWriter, r *http.Request) {
+	// Build new URL with same query parameters
+	newURL := "/filter/preview"
+	if r.URL.RawQuery != "" {
+		newURL += "?" + r.URL.RawQuery
+	}
+	http.Redirect(w, r, newURL, http.StatusMovedPermanently)
+}
+
 // Health handles health check requests
 func (s *Server) Health(w http.ResponseWriter, r *http.Request) {
 	stats := s.upstreamCache.GetStats()
@@ -997,14 +1007,15 @@ func (s *Server) Start() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.ConfigPage)
 	mux.HandleFunc("/filter", s.ServeHTTP)
-	mux.HandleFunc("/debug", s.DebugHTTP)
+	mux.HandleFunc("/filter/preview", s.DebugHTTP)
+	mux.HandleFunc("/debug", s.DebugRedirect)
 	mux.HandleFunc("/status", s.Status)
 	mux.HandleFunc("/api/lodges", s.GetLodges)
 	mux.HandleFunc("/health", s.Health)
 
 	addr := fmt.Sprintf(":%d", s.cfg.Server.Port)
 	log.Printf("Starting server on %s", addr)
-	log.Printf("Endpoints: / /filter /debug /status /api/lodges /health")
+	log.Printf("Endpoints: / /filter /filter/preview /debug (redirect) /status /api/lodges /health")
 
 	server := &http.Server{
 		Addr:         addr,

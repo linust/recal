@@ -359,6 +359,8 @@ func setupTestServer(t *testing.T) *httptest.Server {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", server.ConfigPage)
 	mux.HandleFunc("/filter", server.ServeHTTP)
+	mux.HandleFunc("/filter/preview", server.DebugHTTP)
+	mux.HandleFunc("/debug", server.DebugRedirect)
 	mux.HandleFunc("/api/lodges", server.GetLodges)
 	mux.HandleFunc("/health", server.Health)
 
@@ -419,6 +421,8 @@ func setupTestServerWithUpstream(t *testing.T, upstreamURL string) *httptest.Ser
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", server.ConfigPage)
 	mux.HandleFunc("/filter", server.ServeHTTP)
+	mux.HandleFunc("/filter/preview", server.DebugHTTP)
+	mux.HandleFunc("/debug", server.DebugRedirect)
 	mux.HandleFunc("/api/lodges", server.GetLodges)
 	mux.HandleFunc("/health", server.Health)
 
@@ -454,6 +458,61 @@ END:VCALENDAR`)
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(data)
 	}))
+}
+
+// TestIntegrationDebugRedirect tests that /debug redirects to /filter/preview
+func TestIntegrationDebugRedirect(t *testing.T) {
+	srv := setupTestServer(t)
+	defer srv.Close()
+
+	// Create HTTP client that doesn't follow redirects
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	tests := []struct {
+		name         string
+		oldURL       string
+		wantLocation string
+	}{
+		{
+			name:         "redirect without query params",
+			oldURL:       "/debug",
+			wantLocation: "/filter/preview",
+		},
+		{
+			name:         "redirect with query params",
+			oldURL:       "/debug?Grad=3&Loge=Göta",
+			wantLocation: "/filter/preview?Grad=3&Loge=G%c3%b6ta", // ö is URL-encoded (lowercase hex)
+		},
+		{
+			name:         "redirect with pattern param",
+			oldURL:       "/debug?pattern=test",
+			wantLocation: "/filter/preview?pattern=test",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp, err := client.Get(srv.URL + tt.oldURL)
+			if err != nil {
+				t.Fatalf("Failed to GET %s: %v", tt.oldURL, err)
+			}
+			defer resp.Body.Close()
+
+			// Should be a 301 Moved Permanently redirect
+			if resp.StatusCode != http.StatusMovedPermanently {
+				t.Errorf("Status = %d, want %d (301 Moved Permanently)", resp.StatusCode, http.StatusMovedPermanently)
+			}
+
+			location := resp.Header.Get("Location")
+			if location != tt.wantLocation {
+				t.Errorf("Location = %q, want %q", location, tt.wantLocation)
+			}
+		})
+	}
 }
 
 // TestIntegrationServerStartup tests that the server can start and serve requests
