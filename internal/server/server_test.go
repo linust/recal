@@ -33,12 +33,16 @@ func getTestConfig() *config.Config {
 			MaxExecutionTime: 1 * time.Second,
 		},
 		Filters: config.FiltersConfig{
-			Grad: config.GradFilterConfig{
+			Grade: config.GradeFilterConfig{
 				Field:           "SUMMARY",
 				PatternTemplate: "Grad %s",
 			},
-			Loge: config.LogeFilterConfig{
+			Lodge: config.LodgeFilterConfig{
 				Field: "SUMMARY",
+				Names: []string{
+					"Moderlogen",
+					"TestLodge",
+				},
 				Patterns: map[string]config.PatternSpec{
 					"Moderlogen": {Template: "PB, %s:"},
 					"default":    {Template: "%s PB"},

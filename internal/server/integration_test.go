@@ -330,11 +330,11 @@ func setupTestServer(t *testing.T) *httptest.Server {
 			MaxExecutionTime: 1 * time.Second,
 		},
 		Filters: config.FiltersConfig{
-			Grad: config.GradFilterConfig{
+			Grade: config.GradeFilterConfig{
 				Field:           "SUMMARY",
 				PatternTemplate: "Grad %s",
 			},
-			Loge: config.LogeFilterConfig{
+			Lodge: config.LodgeFilterConfig{
 				Field: "SUMMARY",
 				Patterns: map[string]config.PatternSpec{
 					"Moderlogen": {Template: "PB, %s:"},
@@ -392,11 +392,11 @@ func setupTestServerWithUpstream(t *testing.T, upstreamURL string) *httptest.Ser
 			MaxExecutionTime: 1 * time.Second,
 		},
 		Filters: config.FiltersConfig{
-			Grad: config.GradFilterConfig{
+			Grade: config.GradeFilterConfig{
 				Field:           "SUMMARY",
 				PatternTemplate: "Grad %s",
 			},
-			Loge: config.LogeFilterConfig{
+			Lodge: config.LodgeFilterConfig{
 				Field: "SUMMARY",
 				Patterns: map[string]config.PatternSpec{
 					"Moderlogen": {Template: "PB, %s:"},

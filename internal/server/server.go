@@ -12,7 +12,6 @@ import (
 	"os"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/linus/recal/internal/cache"
@@ -21,6 +20,8 @@ import (
 	"github.com/linus/recal/internal/filter"
 	"github.com/linus/recal/internal/metrics"
 	"github.com/linus/recal/internal/parser"
+	"golang.org/x/text/collate"
+	"golang.org/x/text/language"
 )
 
 // Server is the HTTP server for the ReCal application
@@ -718,13 +719,13 @@ func (s *Server) buildFilters(engine *filter.Engine, params *Params) error {
 
 	// Add special filters
 	if params.SpecialFilters.Grad != "" {
-		if err := engine.AddGradFilter(params.SpecialFilters.Grad); err != nil {
+		if err := engine.AddGradeFilter(params.SpecialFilters.Grad); err != nil {
 			return fmt.Errorf("grad filter error: %w", err)
 		}
 	}
 
 	if params.SpecialFilters.Loge != "" {
-		if err := engine.AddLogeFilter(params.SpecialFilters.Loge); err != nil {
+		if err := engine.AddLodgeFilter(params.SpecialFilters.Loge); err != nil {
 			return fmt.Errorf("loge filter error: %w", err)
 		}
 	}
@@ -892,52 +893,11 @@ func (s *Server) GetLodges(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch and parse upstream feed
-	ctx := r.Context()
-	upstreamData, _, err := s.fetchUpstream(ctx, s.cfg.Upstream.DefaultURL)
-	if err != nil {
-		http.Error(w, "Failed to fetch upstream", http.StatusBadGateway)
-		log.Printf("Failed to fetch upstream for lodges: %v", err)
-		return
-	}
+	// Return canonical lodge list from config (already sorted in config)
+	lodges := make([]string, len(s.cfg.Filters.Lodge.Names))
+	copy(lodges, s.cfg.Filters.Lodge.Names)
 
-	cal, err := parser.Parse(bytes.NewReader(upstreamData))
-	if err != nil {
-		http.Error(w, "Failed to parse calendar", http.StatusInternalServerError)
-		log.Printf("Failed to parse calendar for lodges: %v", err)
-		return
-	}
-
-	// Extract unique lodge names
-	lodgeMap := make(map[string]bool)
-	for _, event := range cal.Events {
-		// Pattern: "{LodgeName} PB:" or special cases
-		if strings.Contains(event.Summary, " PB:") {
-			parts := strings.Split(event.Summary, " PB:")
-			if len(parts) > 0 {
-				lodge := strings.TrimSpace(parts[0])
-				// Remove any prefix before the lodge name (e.g., "Grad 4, ")
-				if idx := strings.LastIndex(lodge, ", "); idx != -1 {
-					lodge = strings.TrimSpace(lodge[idx+2:])
-				}
-				// Remove "INSTÄLLT: " prefix if present
-				lodge = strings.TrimPrefix(lodge, "INSTÄLLT: ")
-				if lodge != "" {
-					lodgeMap[lodge] = true
-				}
-			}
-		}
-		// Special case: Moderlogen
-		if strings.Contains(event.Summary, "PB, Moderlogen:") {
-			lodgeMap["Moderlogen"] = true
-		}
-	}
-
-	// Convert to array and sort with Swedish collation
-	lodges := make([]string, 0, len(lodgeMap))
-	for lodge := range lodgeMap {
-		lodges = append(lodges, lodge)
-	}
+	// Sort with Swedish collation
 	sortSwedish(lodges)
 
 	// Return JSON
@@ -948,58 +908,10 @@ func (s *Server) GetLodges(w http.ResponseWriter, r *http.Request) {
 
 // sortSwedish sorts strings using Swedish alphabetical order (å, ä, ö after z)
 func sortSwedish(strings []string) {
+	collator := collate.New(language.Swedish)
 	sort.Slice(strings, func(i, j int) bool {
-		return compareSwedish(strings[i], strings[j]) < 0
+		return collator.CompareString(strings[i], strings[j]) < 0
 	})
-}
-
-// compareSwedish compares two strings using Swedish collation rules
-// Returns: -1 if a < b, 0 if a == b, 1 if a > b
-func compareSwedish(a, b string) int {
-	// Swedish alphabet order: a-z, å, ä, ö
-	// Convert to lowercase for comparison
-	a = strings.ToLower(a)
-	b = strings.ToLower(b)
-
-	minLen := len(a)
-	if len(b) < minLen {
-		minLen = len(b)
-	}
-
-	for i := 0; i < minLen; i++ {
-		aVal := getSwedishValue(rune(a[i]))
-		bVal := getSwedishValue(rune(b[i]))
-		if aVal != bVal {
-			if aVal < bVal {
-				return -1
-			}
-			return 1
-		}
-	}
-
-	// If all compared chars are equal, shorter string comes first
-	if len(a) < len(b) {
-		return -1
-	}
-	if len(a) > len(b) {
-		return 1
-	}
-	return 0
-}
-
-// getSwedishValue returns a sort value for Swedish characters
-// Regular a-z get their ASCII values, å/ä/ö come after z
-func getSwedishValue(r rune) int {
-	switch r {
-	case 'å':
-		return 'z' + 1
-	case 'ä':
-		return 'z' + 2
-	case 'ö':
-		return 'z' + 3
-	default:
-		return int(r)
-	}
 }
 
 // Start starts the HTTP server

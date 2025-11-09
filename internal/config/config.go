@@ -49,21 +49,22 @@ type RegexConfig struct {
 
 // FiltersConfig holds special filter configurations
 type FiltersConfig struct {
-	Grad          GradFilterConfig   `yaml:"grad"`
-	Loge          LogeFilterConfig   `yaml:"loge"`
+	Grade         GradeFilterConfig  `yaml:"grade"`
+	Lodge         LodgeFilterConfig  `yaml:"lodge"`
 	ConfirmedOnly SimpleFilterConfig `yaml:"confirmed_only"`
 	Installt      SimpleFilterConfig `yaml:"installt"`
 }
 
-// GradFilterConfig holds Grad filter configuration
-type GradFilterConfig struct {
+// GradeFilterConfig holds Grade filter configuration
+type GradeFilterConfig struct {
 	Field           string `yaml:"field"`
 	PatternTemplate string `yaml:"pattern_template"`
 }
 
-// LogeFilterConfig holds Loge filter configuration
-type LogeFilterConfig struct {
+// LodgeFilterConfig holds Lodge filter configuration
+type LodgeFilterConfig struct {
 	Field    string                 `yaml:"field"`
+	Names    []string               `yaml:"names"`
 	Patterns map[string]PatternSpec `yaml:"patterns"`
 }
 
@@ -194,33 +195,33 @@ func validate(cfg *Config) error {
 	}
 
 	// Validate filter configurations
-	if cfg.Filters.Grad.Field == "" {
-		return fmt.Errorf("grad filter field cannot be empty")
+	if cfg.Filters.Grade.Field == "" {
+		return fmt.Errorf("grade filter field cannot be empty")
 	}
 
-	if cfg.Filters.Grad.PatternTemplate == "" {
-		return fmt.Errorf("grad filter pattern template cannot be empty")
+	if cfg.Filters.Grade.PatternTemplate == "" {
+		return fmt.Errorf("grade filter pattern template cannot be empty")
 	}
 
-	if cfg.Filters.Loge.Field == "" {
-		return fmt.Errorf("loge filter field cannot be empty")
+	if cfg.Filters.Lodge.Field == "" {
+		return fmt.Errorf("lodge filter field cannot be empty")
 	}
 
-	if cfg.Filters.Loge.Patterns == nil {
-		return fmt.Errorf("loge filter patterns cannot be nil")
+	if cfg.Filters.Lodge.Patterns == nil {
+		return fmt.Errorf("lodge filter patterns cannot be nil")
 	}
 
-	if _, ok := cfg.Filters.Loge.Patterns["default"]; !ok {
-		return fmt.Errorf("loge filter must have a default pattern")
+	if _, ok := cfg.Filters.Lodge.Patterns["default"]; !ok {
+		return fmt.Errorf("lodge filter must have a default pattern")
 	}
 
 	return nil
 }
 
-// GetLogePattern returns the pattern template for a given lodge name
-func (c *Config) GetLogePattern(lodgeName string) string {
-	if spec, ok := c.Filters.Loge.Patterns[lodgeName]; ok {
+// GetLodgePattern returns the pattern template for a given lodge name
+func (c *Config) GetLodgePattern(lodgeName string) string {
+	if spec, ok := c.Filters.Lodge.Patterns[lodgeName]; ok {
 		return spec.Template
 	}
-	return c.Filters.Loge.Patterns["default"].Template
+	return c.Filters.Lodge.Patterns["default"].Template
 }

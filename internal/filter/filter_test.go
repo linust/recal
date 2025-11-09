@@ -11,12 +11,17 @@ import (
 func getTestConfig() *config.Config {
 	return &config.Config{
 		Filters: config.FiltersConfig{
-			Grad: config.GradFilterConfig{
+			Grade: config.GradeFilterConfig{
 				Field:           "SUMMARY",
 				PatternTemplate: "Grad %s", // Matches "Grad 1", "Grad 4", etc
 			},
-			Loge: config.LogeFilterConfig{
+			Lodge: config.LodgeFilterConfig{
 				Field: "SUMMARY",
+				Names: []string{
+					"Göta",
+					"Moderlogen",
+					"Sundsvall",
+				},
 				Patterns: map[string]config.PatternSpec{
 					"Moderlogen": {Template: "PB, %s:"},
 					"Göta":       {Template: "%s PB:"},
@@ -64,9 +69,9 @@ func TestAddFilter(t *testing.T) {
 	}
 }
 
-// TestAddGradFilter tests the Grad special filter
+// TestAddGradeFilter tests the Grad special filter
 // Validates: Grad pattern expansion, number extraction
-func TestAddGradFilter(t *testing.T) {
+func TestAddGradeFilter(t *testing.T) {
 	cfg := getTestConfig()
 
 	tests := []struct {
@@ -110,17 +115,17 @@ func TestAddGradFilter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			engine := NewEngine(cfg)
-			err := engine.AddGradFilter(tt.input)
+			err := engine.AddGradeFilter(tt.input)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("AddGradFilter(%q) error = %v, wantErr %v (%s)", tt.input, err, tt.wantErr, tt.comment)
+				t.Errorf("AddGradeFilter(%q) error = %v, wantErr %v (%s)", tt.input, err, tt.wantErr, tt.comment)
 			}
 		})
 	}
 }
 
-// TestAddLogeFilter tests the Loge special filter
+// TestAddLodgeFilter tests the Loge special filter
 // Validates: Lodge pattern expansion, multiple lodges, OR logic
-func TestAddLogeFilter(t *testing.T) {
+func TestAddLodgeFilter(t *testing.T) {
 	cfg := getTestConfig()
 
 	tests := []struct {
@@ -164,9 +169,9 @@ func TestAddLogeFilter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			engine := NewEngine(cfg)
-			err := engine.AddLogeFilter(tt.input)
+			err := engine.AddLodgeFilter(tt.input)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("AddLogeFilter(%q) error = %v, wantErr %v (%s)", tt.input, err, tt.wantErr, tt.comment)
+				t.Errorf("AddLodgeFilter(%q) error = %v, wantErr %v (%s)", tt.input, err, tt.wantErr, tt.comment)
 			}
 		})
 	}
@@ -239,9 +244,9 @@ func TestApplyGradFilter(t *testing.T) {
 	engine := NewEngine(cfg)
 
 	// Grad=2 means keep grades 1-2, filter out grades 3-10
-	err := engine.AddGradFilter("2")
+	err := engine.AddGradeFilter("2")
 	if err != nil {
-		t.Fatalf("AddGradFilter() failed: %v", err)
+		t.Fatalf("AddGradeFilter() failed: %v", err)
 	}
 
 	cal := &parser.Calendar{
@@ -282,9 +287,9 @@ func TestApplyLogeFilter(t *testing.T) {
 	cfg := getTestConfig()
 	engine := NewEngine(cfg)
 
-	err := engine.AddLogeFilter("Moderlogen,Göta")
+	err := engine.AddLodgeFilter("Moderlogen,Göta")
 	if err != nil {
-		t.Fatalf("AddLogeFilter() failed: %v", err)
+		t.Fatalf("AddLodgeFilter() failed: %v", err)
 	}
 
 	cal := &parser.Calendar{
@@ -403,9 +408,9 @@ func TestApplyMultipleFilters(t *testing.T) {
 	}
 
 	// Grad=1 means keep grades 1, filter out grades 2-10
-	err = engine.AddGradFilter("1")
+	err = engine.AddGradeFilter("1")
 	if err != nil {
-		t.Fatalf("AddGradFilter() failed: %v", err)
+		t.Fatalf("AddGradeFilter() failed: %v", err)
 	}
 
 	cal := &parser.Calendar{

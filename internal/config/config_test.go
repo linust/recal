@@ -34,11 +34,11 @@ regex:
   max_execution_time: 1s
 
 filters:
-  grad:
+  grade:
     field: "SUMMARY"
-    pattern_template: "Grad: [%s]"
+    pattern_template: "Grade: [%s]"
 
-  loge:
+  lodge:
     field: "SUMMARY"
     patterns:
       "Moderlogen":
@@ -115,15 +115,15 @@ filters:
 	}
 
 	// Validate filter configs
-	if cfg.Filters.Grad.Field != "SUMMARY" {
-		t.Errorf("Filters.Grad.Field = %q, want SUMMARY", cfg.Filters.Grad.Field)
+	if cfg.Filters.Grade.Field != "SUMMARY" {
+		t.Errorf("Filters.Grade.Field = %q, want SUMMARY", cfg.Filters.Grade.Field)
 	}
-	if cfg.Filters.Grad.PatternTemplate != "Grad: [%s]" {
-		t.Errorf("Filters.Grad.PatternTemplate = %q, want 'Grad: [%%s]'", cfg.Filters.Grad.PatternTemplate)
+	if cfg.Filters.Grade.PatternTemplate != "Grade: [%s]" {
+		t.Errorf("Filters.Grade.PatternTemplate = %q, want 'Grade: [%%s]'", cfg.Filters.Grade.PatternTemplate)
 	}
 
-	if cfg.Filters.Loge.Field != "SUMMARY" {
-		t.Errorf("Filters.Loge.Field = %q, want SUMMARY", cfg.Filters.Loge.Field)
+	if cfg.Filters.Lodge.Field != "SUMMARY" {
+		t.Errorf("Filters.Lodge.Field = %q, want SUMMARY", cfg.Filters.Lodge.Field)
 	}
 }
 
@@ -153,10 +153,10 @@ regex:
   max_execution_time: 1s
 
 filters:
-  grad:
+  grade:
     field: "SUMMARY"
-    pattern_template: "Grad: [%s]"
-  loge:
+    pattern_template: "Grade: [%s]"
+  lodge:
     field: "SUMMARY"
     patterns:
       default:
@@ -247,10 +247,10 @@ cache:
 regex:
   max_execution_time: 1s
 filters:
-  grad:
+  grade:
     field: "SUMMARY"
-    pattern_template: "Grad: [%s]"
-  loge:
+    pattern_template: "Grade: [%s]"
+  lodge:
     field: "SUMMARY"
     patterns:
       default:
@@ -284,10 +284,10 @@ cache:
 regex:
   max_execution_time: 1s
 filters:
-  grad:
+  grade:
     field: "SUMMARY"
-    pattern_template: "Grad: [%s]"
-  loge:
+    pattern_template: "Grade: [%s]"
+  lodge:
     field: "SUMMARY"
     patterns:
       default:
@@ -322,10 +322,10 @@ cache:
 regex:
   max_execution_time: 1s
 filters:
-  grad:
+  grade:
     field: "SUMMARY"
-    pattern_template: "Grad: [%s]"
-  loge:
+    pattern_template: "Grade: [%s]"
+  lodge:
     field: "SUMMARY"
     patterns:
       default:
@@ -358,10 +358,10 @@ cache:
 regex:
   max_execution_time: 1s
 filters:
-  grad:
+  grade:
     field: "SUMMARY"
-    pattern_template: "Grad: [%s]"
-  loge:
+    pattern_template: "Grade: [%s]"
+  lodge:
     field: "SUMMARY"
     patterns:
       default:
@@ -396,10 +396,10 @@ cache:
 regex:
   max_execution_time: 1s
 filters:
-  grad:
+  grade:
     field: "SUMMARY"
-    pattern_template: "Grad: [%s]"
-  loge:
+    pattern_template: "Grade: [%s]"
+  lodge:
     field: "SUMMARY"
     patterns:
       "Moderlogen":
@@ -411,7 +411,7 @@ filters:
     field: "SUMMARY"
     pattern: "INSTÄLLT"
 `,
-			errContains: "loge filter must have a default pattern",
+			errContains: "lodge filter must have a default pattern",
 		},
 		{
 			name: "negative max memory",
@@ -434,10 +434,10 @@ cache:
 regex:
   max_execution_time: 1s
 filters:
-  grad:
+  grade:
     field: "SUMMARY"
-    pattern_template: "Grad: [%s]"
-  loge:
+    pattern_template: "Grade: [%s]"
+  lodge:
     field: "SUMMARY"
     patterns:
       default:
@@ -472,10 +472,10 @@ cache:
 regex:
   max_execution_time: 1s
 filters:
-  grad:
+  grade:
     field: "SUMMARY"
-    pattern_template: "Grad: [%s]"
-  loge:
+    pattern_template: "Grade: [%s]"
+  lodge:
     field: "SUMMARY"
     patterns:
       default:
@@ -510,12 +510,12 @@ filters:
 	}
 }
 
-// TestGetLogePattern tests the GetLogePattern method
+// TestGetLodgePattern tests the GetLodgePattern method
 // Validates: Pattern lookup, default fallback, special cases
-func TestGetLogePattern(t *testing.T) {
+func TestGetLodgePattern(t *testing.T) {
 	cfg := &Config{
 		Filters: FiltersConfig{
-			Loge: LogeFilterConfig{
+			Lodge: LodgeFilterConfig{
 				Field: "SUMMARY",
 				Patterns: map[string]PatternSpec{
 					"Moderlogen": {Template: "PB, %s:"},
@@ -560,9 +560,9 @@ func TestGetLogePattern(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := cfg.GetLogePattern(tt.lodge)
+			got := cfg.GetLodgePattern(tt.lodge)
 			if got != tt.want {
-				t.Errorf("GetLogePattern(%q) = %q, want %q (%s)", tt.lodge, got, tt.want, tt.comment)
+				t.Errorf("GetLodgePattern(%q) = %q, want %q (%s)", tt.lodge, got, tt.want, tt.comment)
 			}
 		})
 	}

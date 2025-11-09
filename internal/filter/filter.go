@@ -61,8 +61,8 @@ func (e *Engine) AddFilter(fields []string, pattern string) error {
 	return nil
 }
 
-// AddGradFilter adds a Grad filter (e.g., Grad=1,2,3 -> matches "Grad: [1]", "Grad: [2]", "Grad: [3]")
-func (e *Engine) AddGradFilter(threshold string) error {
+// AddGradeFilter adds a Grad filter (e.g., Grad=1,2,3 -> matches "Grad: [1]", "Grad: [2]", "Grad: [3]")
+func (e *Engine) AddGradeFilter(threshold string) error {
 	if threshold == "" {
 		return fmt.Errorf("threshold cannot be empty")
 	}
@@ -87,7 +87,7 @@ func (e *Engine) AddGradFilter(threshold string) error {
 	// This will filter OUT (remove) all grades above the threshold
 	var patterns []string
 	for grade := maxGrade + 1; grade <= 10; grade++ {
-		pattern := fmt.Sprintf(e.cfg.Filters.Grad.PatternTemplate, fmt.Sprintf("%d", grade))
+		pattern := fmt.Sprintf(e.cfg.Filters.Grade.PatternTemplate, fmt.Sprintf("%d", grade))
 		patterns = append(patterns, pattern)
 	}
 
@@ -104,7 +104,7 @@ func (e *Engine) AddGradFilter(threshold string) error {
 	}
 
 	e.filters = append(e.filters, Filter{
-		Fields:  []string{e.cfg.Filters.Grad.Field},
+		Fields:  []string{e.cfg.Filters.Grade.Field},
 		Pattern: re,
 		Raw:     combinedPattern,
 		Invert:  false,
@@ -113,8 +113,8 @@ func (e *Engine) AddGradFilter(threshold string) error {
 	return nil
 }
 
-// AddLogeFilter adds a Loge filter (e.g., Loge=Göta,Borås,Moderlogen)
-func (e *Engine) AddLogeFilter(lodges string) error {
+// AddLodgeFilter adds a Loge filter (e.g., Loge=Göta,Borås,Moderlogen)
+func (e *Engine) AddLodgeFilter(lodges string) error {
 	if lodges == "" {
 		return fmt.Errorf("lodges cannot be empty")
 	}
@@ -130,21 +130,30 @@ func (e *Engine) AddLogeFilter(lodges string) error {
 		}
 
 		// Get the pattern template for this lodge
-		template := e.cfg.GetLogePattern(name)
+		template := e.cfg.GetLodgePattern(name)
 
-		// Replace %s with the lodge name
-		pattern := strings.Replace(template, "%s", name, -1)
-		patterns = append(patterns, regexp.QuoteMeta(pattern))
+		// If the lodge name doesn't end with 's', make trailing 's' optional in the pattern
+		// This allows "Sundsvall" to match both "Sundsvall PB:" and "Sundsvalls PB:"
+		// But "Borås" will only match "Borås PB:" (not "Boråss PB:")
+		var lodgePattern string
+		if !strings.HasSuffix(name, "s") {
+			lodgePattern = name + "s?"
+		} else {
+			lodgePattern = name
+		}
+
+		pattern := strings.ReplaceAll(template, "%s", lodgePattern)
+		patterns = append(patterns, pattern)
 
 		// IMPORTANT: Some lodges (like Moderlogen) have events in BOTH formats:
 		// 1. Special pattern (e.g., "PB\, Moderlogen:")
 		// 2. Default pattern (e.g., "Moderlogen PB:")
 		// We need to check if this lodge has a special pattern different from default,
 		// and if so, also add the default pattern to catch all variations.
-		defaultTemplate := e.cfg.Filters.Loge.Patterns["default"].Template
+		defaultTemplate := e.cfg.Filters.Lodge.Patterns["default"].Template
 		if template != defaultTemplate {
-			defaultPattern := strings.Replace(defaultTemplate, "%s", name, -1)
-			patterns = append(patterns, regexp.QuoteMeta(defaultPattern))
+			defaultPattern := strings.ReplaceAll(defaultTemplate, "%s", lodgePattern)
+			patterns = append(patterns, defaultPattern)
 		}
 	}
 
@@ -161,7 +170,7 @@ func (e *Engine) AddLogeFilter(lodges string) error {
 	}
 
 	e.filters = append(e.filters, Filter{
-		Fields:  []string{e.cfg.Filters.Loge.Field},
+		Fields:  []string{e.cfg.Filters.Lodge.Field},
 		Pattern: re,
 		Raw:     combinedPattern,
 		Invert:  false,
