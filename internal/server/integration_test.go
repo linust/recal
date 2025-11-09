@@ -123,14 +123,14 @@ func TestIntegrationFilterWithTestData(t *testing.T) {
 	}{
 		{
 			name:            "no filters - redirect to config",
-			url:             "/filter",
+			url:             "/query",
 			wantStatusCode:  http.StatusSeeOther,
 			wantContentType: "",
 			checkBody:       nil,
 		},
 		{
 			name:            "basic pattern filter",
-			url:             "/filter?pattern=Göta",
+			url:             "/query?pattern=Göta",
 			wantStatusCode:  http.StatusOK,
 			wantContentType: "text/calendar",
 			checkBody: func(t *testing.T, body string) {
@@ -145,7 +145,7 @@ func TestIntegrationFilterWithTestData(t *testing.T) {
 		},
 		{
 			name:            "Grad filter - keep grades 1-4",
-			url:             "/filter?Grad=4",
+			url:             "/query?Grad=4",
 			wantStatusCode:  http.StatusOK,
 			wantContentType: "text/calendar",
 			checkBody: func(t *testing.T, body string) {
@@ -160,7 +160,7 @@ func TestIntegrationFilterWithTestData(t *testing.T) {
 		},
 		{
 			name:            "Loge filter - remove specific lodges",
-			url:             "/filter?Loge=Göta,Borås",
+			url:             "/query?Loge=Göta,Borås",
 			wantStatusCode:  http.StatusOK,
 			wantContentType: "text/calendar",
 			checkBody: func(t *testing.T, body string) {
@@ -178,7 +178,7 @@ func TestIntegrationFilterWithTestData(t *testing.T) {
 		},
 		{
 			name:            "RemoveUnconfirmed filter",
-			url:             "/filter?RemoveUnconfirmed",
+			url:             "/query?RemoveUnconfirmed",
 			wantStatusCode:  http.StatusOK,
 			wantContentType: "text/calendar",
 			checkBody: func(t *testing.T, body string) {
@@ -193,7 +193,7 @@ func TestIntegrationFilterWithTestData(t *testing.T) {
 		},
 		{
 			name:            "RemoveInstallt filter - remove cancelled events",
-			url:             "/filter?RemoveInstallt",
+			url:             "/query?RemoveInstallt",
 			wantStatusCode:  http.StatusOK,
 			wantContentType: "text/calendar",
 			checkBody: func(t *testing.T, body string) {
@@ -208,7 +208,7 @@ func TestIntegrationFilterWithTestData(t *testing.T) {
 		},
 		{
 			name:            "Combined filters - Grad and RemoveUnconfirmed",
-			url:             "/filter?Grad=4&RemoveUnconfirmed",
+			url:             "/query?Grad=4&RemoveUnconfirmed",
 			wantStatusCode:  http.StatusOK,
 			wantContentType: "text/calendar",
 			checkBody: func(t *testing.T, body string) {
@@ -226,7 +226,7 @@ func TestIntegrationFilterWithTestData(t *testing.T) {
 		},
 		{
 			name:            "Debug mode",
-			url:             "/filter?pattern=Göta&debug=true",
+			url:             "/query?pattern=Göta&debug=true",
 			wantStatusCode:  http.StatusOK,
 			wantContentType: "text/html",
 			checkBody: func(t *testing.T, body string) {
@@ -288,9 +288,9 @@ func TestIntegrationCacheHeaders(t *testing.T) {
 	srv := setupTestServerWithUpstream(t, upstreamServer.URL+"/test-feed.ics")
 	defer srv.Close()
 
-	resp, err := http.Get(srv.URL + "/filter?pattern=test")
+	resp, err := http.Get(srv.URL + "/query?pattern=test")
 	if err != nil {
-		t.Fatalf("Failed to GET /filter: %v", err)
+		t.Fatalf("Failed to GET /query: %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -358,8 +358,8 @@ func setupTestServer(t *testing.T) *httptest.Server {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", server.ConfigPage)
-	mux.HandleFunc("/filter", server.ServeHTTP)
-	mux.HandleFunc("/filter/preview", server.DebugHTTP)
+	mux.HandleFunc("/query", server.ServeHTTP)
+	mux.HandleFunc("/query/preview", server.DebugHTTP)
 	mux.HandleFunc("/debug", server.DebugRedirect)
 	mux.HandleFunc("/api/lodges", server.GetLodges)
 	mux.HandleFunc("/health", server.Health)
@@ -420,8 +420,8 @@ func setupTestServerWithUpstream(t *testing.T, upstreamURL string) *httptest.Ser
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", server.ConfigPage)
-	mux.HandleFunc("/filter", server.ServeHTTP)
-	mux.HandleFunc("/filter/preview", server.DebugHTTP)
+	mux.HandleFunc("/query", server.ServeHTTP)
+	mux.HandleFunc("/query/preview", server.DebugHTTP)
 	mux.HandleFunc("/debug", server.DebugRedirect)
 	mux.HandleFunc("/api/lodges", server.GetLodges)
 	mux.HandleFunc("/health", server.Health)
@@ -460,7 +460,7 @@ END:VCALENDAR`)
 	}))
 }
 
-// TestIntegrationDebugRedirect tests that /debug redirects to /filter/preview
+// TestIntegrationDebugRedirect tests that /debug redirects to /query/preview
 func TestIntegrationDebugRedirect(t *testing.T) {
 	srv := setupTestServer(t)
 	defer srv.Close()
@@ -480,17 +480,17 @@ func TestIntegrationDebugRedirect(t *testing.T) {
 		{
 			name:         "redirect without query params",
 			oldURL:       "/debug",
-			wantLocation: "/filter/preview",
+			wantLocation: "/query/preview",
 		},
 		{
 			name:         "redirect with query params",
 			oldURL:       "/debug?Grad=3&Loge=Göta",
-			wantLocation: "/filter/preview?Grad=3&Loge=G%c3%b6ta", // ö is URL-encoded (lowercase hex)
+			wantLocation: "/query/preview?Grad=3&Loge=G%c3%b6ta", // ö is URL-encoded (lowercase hex)
 		},
 		{
 			name:         "redirect with pattern param",
 			oldURL:       "/debug?pattern=test",
-			wantLocation: "/filter/preview?pattern=test",
+			wantLocation: "/query/preview?pattern=test",
 		},
 	}
 
@@ -535,8 +535,8 @@ func TestIntegrationServerStartup(t *testing.T) {
 	}{
 		{"/", http.StatusOK},
 		{"/health", http.StatusOK},
-		{"/filter", http.StatusSeeOther}, // Redirects when no params
-		// Note: /filter?pattern=test would require upstream fetch, which would fail with SSRF protection
+		{"/query", http.StatusSeeOther}, // Redirects when no params
+		// Note: /query?pattern=test would require upstream fetch, which would fail with SSRF protection
 	}
 
 	for _, ep := range endpoints {

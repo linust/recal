@@ -76,64 +76,64 @@ func TestParseParams(t *testing.T) {
 	}{
 		{
 			name:            "basic filter",
-			url:             "/filter?pattern=Meeting",
+			url:             "/query?pattern=Meeting",
 			wantFilterCount: 1,
 		},
 		{
 			name:            "basic filter with field",
-			url:             "/filter?field=SUMMARY&pattern=Meeting",
+			url:             "/query?field=SUMMARY&pattern=Meeting",
 			wantFilterCount: 1,
 		},
 		{
 			name:            "indexed filters",
-			url:             "/filter?field1=SUMMARY&pattern1=Meeting&field2=DESCRIPTION&pattern2=urgent",
+			url:             "/query?field1=SUMMARY&pattern1=Meeting&field2=DESCRIPTION&pattern2=urgent",
 			wantFilterCount: 2,
 		},
 		{
 			name:     "Grad filter",
-			url:      "/filter?Grad=1,2,3",
+			url:      "/query?Grad=1,2,3",
 			wantGrad: "1,2,3",
 		},
 		{
 			name:     "Loge filter",
-			url:      "/filter?Loge=Göta,Moderlogen",
+			url:      "/query?Loge=Göta,Moderlogen",
 			wantLoge: "Göta,Moderlogen",
 		},
 		{
 			name:          "RemoveUnconfirmed filter",
-			url:           "/filter?RemoveUnconfirmed",
+			url:           "/query?RemoveUnconfirmed",
 			wantConfirmed: true,
 		},
 		{
 			name:          "RemoveUnconfirmed filter with value",
-			url:           "/filter?RemoveUnconfirmed=true",
+			url:           "/query?RemoveUnconfirmed=true",
 			wantConfirmed: true,
 		},
 		{
 			name:         "RemoveInstallt filter",
-			url:          "/filter?RemoveInstallt",
+			url:          "/query?RemoveInstallt",
 			wantInstallt: true,
 		},
 		{
 			name:         "RemoveInstallt filter with value",
-			url:          "/filter?RemoveInstallt=true",
+			url:          "/query?RemoveInstallt=true",
 			wantInstallt: true,
 		},
 		{
 			name:            "debug mode",
-			url:             "/filter?pattern=test&debug=true",
+			url:             "/query?pattern=test&debug=true",
 			wantDebug:       true,
 			wantFilterCount: 1,
 		},
 		{
 			name:            "upstream parameter",
-			url:             "/filter?upstream=https://custom.com/cal.ics&pattern=test",
+			url:             "/query?upstream=https://custom.com/cal.ics&pattern=test",
 			wantUpstream:    "https://custom.com/cal.ics",
 			wantFilterCount: 1,
 		},
 		{
 			name:            "combined filters",
-			url:             "/filter?pattern=Meeting&Grad=1,2&RemoveUnconfirmed&debug=true",
+			url:             "/query?pattern=Meeting&Grad=1,2&RemoveUnconfirmed&debug=true",
 			wantFilterCount: 1,
 			wantGrad:        "1,2",
 			wantConfirmed:   true,
@@ -350,7 +350,7 @@ func TestMethodNotAllowed(t *testing.T) {
 
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/filter?pattern=test", nil)
+			req := httptest.NewRequest(method, "/query?pattern=test", nil)
 			w := httptest.NewRecorder()
 
 			server.ServeHTTP(w, req)
@@ -566,14 +566,14 @@ func TestGetLodgesEndpoint(t *testing.T) {
 	t.Skip("Integration test - requires actual HTTP server with upstream feed")
 }
 
-// TestRootRedirectsToConfigPage tests that accessing /filter with no params and no default URL redirects to /
+// TestRootRedirectsToConfigPage tests that accessing /query with no params and no default URL redirects to /
 // Validates: Redirect behavior when no filters specified and no default upstream
 func TestRootRedirectsToConfigPage(t *testing.T) {
 	cfg := getTestConfig()
 	cfg.Upstream.DefaultURL = "" // No default URL configured
 	server := New(cfg)
 
-	req := httptest.NewRequest("GET", "/filter", nil)
+	req := httptest.NewRequest("GET", "/query", nil)
 	w := httptest.NewRecorder()
 
 	server.ServeHTTP(w, req)

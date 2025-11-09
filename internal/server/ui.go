@@ -188,7 +188,7 @@ const configPageTemplate = `<!DOCTYPE html>
     <!-- Generated URL -->
     <h3>Genererad URL</h3>
     <div class="url-display" id="generated-url">
-      {{.BaseURL}}/filter
+      {{.BaseURL}}/query
     </div>
 
     <!-- Action Buttons -->
@@ -282,7 +282,7 @@ const configPageTemplate = `<!DOCTYPE html>
 
     // Generate URL based on current settings
     function generateURL() {
-      const baseURL = BASE_URL + '/filter';
+      const baseURL = BASE_URL + '/query';
       const params = new URLSearchParams();
 
       // Add Grad filter
@@ -347,7 +347,7 @@ const configPageTemplate = `<!DOCTYPE html>
     // Preview button - open in debug/preview mode
     document.getElementById('preview-btn').addEventListener('click', () => {
       const currentURL = new URL(generateURL());
-      const previewURL = currentURL.origin + '/filter/preview' + currentURL.search;
+      const previewURL = currentURL.origin + '/query/preview' + currentURL.search;
       window.open(previewURL, '_blank');
     });
 

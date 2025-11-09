@@ -31,7 +31,7 @@ Add direct links from the configuration page to open the configured feed in vari
 
 **FR1: Debug Mode Links**
 - [ ] Config page (`/`) must show "View in Debug Mode" button
-- [ ] Debug page (`/debug`) must show "Edit Configuration" button
+- [ ] Debug page (`/debug` (redirects to `/query/preview`)) must show "Edit Configuration" button
 - [ ] Both links preserve all current filter parameters
 - [ ] Links are only shown when filters are active
 
@@ -117,22 +117,22 @@ Add direct links from the configuration page to open the configured feed in vari
 
 **Apple Calendar (webcal):**
 ```
-webcals://pb.thorsell.info/filter?Grad=3&Loge=Göta
+webcals://pb.thorsell.info/query?Grad=3&Loge=Göta
 ```
 
 **Outlook Desktop:**
 ```
-outlook://subscribe?url=https://pb.thorsell.info/filter?Grad=3&Loge=Göta
+outlook://subscribe?url=https://pb.thorsell.info/query?Grad=3&Loge=Göta
 ```
 
 **Google Calendar:**
 ```
-https://calendar.google.com/calendar/render?cid=https://pb.thorsell.info/filter?Grad=3&Loge=Göta
+https://calendar.google.com/calendar/render?cid=https://pb.thorsell.info/query?Grad=3&Loge=Göta
 ```
 
 **Generic webcal:**
 ```
-webcal://pb.thorsell.info/filter?Grad=3&Loge=Göta
+webcal://pb.thorsell.info/query?Grad=3&Loge=Göta
 ```
 
 #### Platform Detection
@@ -236,7 +236,7 @@ Allow users to save filter configurations as named feeds with persistent slugs, 
 - [ ] View feed statistics (access count, last access)
 
 **FR4: Backwards Compatibility**
-- [ ] Direct URLs (`/filter?param=value`) continue working
+- [ ] Direct URLs (`/query?param=value`) continue working
 - [ ] Named feeds are additive, not replacement
 - [ ] Old integrations unaffected
 
@@ -747,7 +747,7 @@ Redesign endpoint structure to improve clarity, consistency, and firewall-based 
 ### Current State
 
 Endpoints are functional but could be better organized:
-- Mix of paths without clear pattern (`/`, `/filter`, `/debug`)
+- Mix of paths without clear pattern (`/`, `/query`, `/debug` (redirects to `/query/preview`))
 - No clear namespace for future named feeds feature
 - Difficult to apply path-based firewall rules for future admin features
 
@@ -782,8 +782,8 @@ location /admin/ {
 | Method | Path | Description | Auth |
 |--------|------|-------------|------|
 | GET | `/` | Configuration page UI | None |
-| GET | `/filter` | Filtered iCal feed (query params) | None |
-| GET | `/debug` | Debug mode (query params) | None |
+| GET | `/query` | Filtered iCal feed (query params) | None |
+| GET | `/debug` (redirects to `/query/preview`) | Debug mode (query params) | None |
 | GET | `/status` | Server status page | None |
 | GET | `/health` | Health check (JSON) | None |
 | GET | `/api/lodges` | List available lodges (JSON) | None |
@@ -807,8 +807,8 @@ location /admin/ {
 
 | Method | Path | Description | Auth |
 |--------|------|-------------|------|
-| GET | `/filter` | Filtered iCal feed via query parameters | None |
-| GET | `/filter/preview` | Preview/debug mode for query-based filters | None |
+| GET | `/query` | Filtered iCal feed via query parameters | None |
+| GET | `/query/preview` | Preview/debug mode for query-based filters | None |
 
 **Named Feeds (Task 2):**
 
@@ -837,10 +837,10 @@ location /admin/ {
 ### Endpoint Changes Summary
 
 **Renamed/Reorganized:**
-- `/debug` → `/filter/preview` (clearer intent, groups with `/filter`)
+- `/debug` (redirects to `/query/preview`) → `/query/preview` (clearer intent, groups with `/query`)
 
 **New Endpoints:**
-- `/filter/preview` - Debug mode for query-based filters
+- `/query/preview` - Debug mode for query-based filters
 - `/feed/{uuid}` - Named feed iCal
 - `/feed/{uuid}/config` (GET/POST) - Named feed configuration UI
 - `/feed/{uuid}/preview` - Named feed debug mode
@@ -849,7 +849,7 @@ location /admin/ {
 
 **Unchanged:**
 - `/` - Config page
-- `/filter` - Query-based iCal
+- `/query` - Query-based iCal
 - `/status` - Status page
 - `/health` - Health check
 - `/api/lodges` - Lodge listing
@@ -857,10 +857,10 @@ location /admin/ {
 ### Migration Path
 
 **Phase 1: Add new endpoints, keep old (backward compatible)**
-1. Implement new `/filter/preview` alongside `/debug`
+1. Implement new `/query/preview` alongside `/debug` (redirects to `/query/preview`)
 2. Both endpoints work identically
-3. Update UI to link to `/filter/preview`
-4. Add deprecation notice to `/debug`
+3. Update UI to link to `/query/preview`
+4. Add deprecation notice to `/debug` (redirects to `/query/preview`)
 
 **Phase 2: Implement Task 2 (Named Feeds)**
 1. Add `/feed/{uuid}` endpoints
@@ -868,7 +868,7 @@ location /admin/ {
 3. No breaking changes to existing functionality
 
 **Phase 3: Deprecation (future)**
-1. Mark `/debug` as deprecated (respond with 301 redirect to `/filter/preview`)
+1. Mark `/debug` (redirects to `/query/preview`) as deprecated (respond with 301 redirect to `/query/preview`)
 2. Update documentation
 3. Monitor usage
 4. Eventually remove (or keep redirecting permanently)
@@ -876,9 +876,9 @@ location /admin/ {
 ### Implementation Requirements
 
 **IR1: Endpoint Routing**
-- [ ] Add `/filter/preview` handler (same as current `/debug`)
+- [ ] Add `/query/preview` handler (same as current `/debug` (redirects to `/query/preview`))
 - [ ] Update internal links to use new paths
-- [ ] Add 301 redirect from `/debug` to `/filter/preview` (for backward compatibility)
+- [ ] Add 301 redirect from `/debug` (redirects to `/query/preview`) to `/query/preview` (for backward compatibility)
 
 **IR2: Documentation Updates**
 - [ ] Update README with new endpoint structure
@@ -887,13 +887,13 @@ location /admin/ {
 
 **IR3: Testing**
 - [ ] Test all existing endpoints still work
-- [ ] Test new `/filter/preview` endpoint
-- [ ] Test redirect from `/debug` to `/filter/preview`
+- [ ] Test new `/query/preview` endpoint
+- [ ] Test redirect from `/debug` (redirects to `/query/preview`) to `/query/preview`
 - [ ] Update integration tests
 
 **IR4: UI Updates**
-- [ ] Update "View in Debug Mode" button to link to `/filter/preview`
-- [ ] Update any hardcoded `/debug` references
+- [ ] Update "View in Debug Mode" button to link to `/query/preview`
+- [ ] Update any hardcoded `/debug` (redirects to `/query/preview`) references
 
 ### Firewall Configuration Examples
 
@@ -948,19 +948,19 @@ handle {
 
 ### Benefits
 
-1. **Clearer Intent**: `/filter/preview` makes purpose obvious
+1. **Clearer Intent**: `/query/preview` makes purpose obvious
 2. **Better Organization**: Related endpoints grouped by prefix
 3. **Simple Firewall Rules**: Single rule protects all admin operations
 4. **REST Compliance**: Standard HTTP methods for CRUD operations
 5. **Scalable**: Easy to add more resources under `/admin/` or `/feed/`
-6. **Backward Compatible**: Old `/debug` endpoint redirects to new location
+6. **Backward Compatible**: Old `/debug` (redirects to `/query/preview`) endpoint redirects to new location
 
 ### Estimated Effort
 
 - **Planning/Design:** 1 hour (completed)
 - **Implementation:** 2-3 hours
-  - Add `/filter/preview` routing
-  - Add redirect from `/debug`
+  - Add `/query/preview` routing
+  - Add redirect from `/debug` (redirects to `/query/preview`)
   - Update UI links
 - **Testing:** 1 hour
 - **Documentation:** 1 hour
@@ -979,8 +979,8 @@ This section lists ALL endpoints in the ReCal application - current and planned.
 | Method | Path | Description | Authentication |
 |--------|------|-------------|----------------|
 | GET | `/` | Configuration page UI for building filter queries | None |
-| GET | `/filter` | Filtered iCal feed based on query parameters | None |
-| GET | `/debug` | Debug mode showing filter statistics (HTML) | None |
+| GET | `/query` | Filtered iCal feed based on query parameters | None |
+| GET | `/debug` (redirects to `/query/preview`) | Debug mode showing filter statistics (HTML) | None |
 | GET | `/status` | Server status page with metrics and cache stats | None |
 | GET | `/health` | Health check endpoint (JSON) | None |
 | GET | `/api/lodges` | List of available lodges (JSON) | None |
@@ -989,9 +989,9 @@ This section lists ALL endpoints in the ReCal application - current and planned.
 
 **No new endpoints** - Task 1 only adds UI enhancements to existing pages:
 - Adds "View in Debug Mode" button on `/` (config page)
-- Adds "Edit Configuration" button on `/debug` page
+- Adds "Edit Configuration" button on `/debug` (redirects to `/query/preview`) page
 - Adds "Open in Calendar App" buttons on `/` page
-- All use existing `/filter` and `/debug` endpoints with query parameters
+- All use existing `/query` and `/debug` (redirects to `/query/preview`) endpoints with query parameters
 
 ### Task 2 Endpoints (Named Feeds)
 
@@ -1020,7 +1020,7 @@ This section lists ALL endpoints in the ReCal application - current and planned.
 
 **By Authentication Requirement:**
 - **Public (no auth):** 9 endpoints
-  - Current: 6 (`/`, `/filter`, `/debug`, `/status`, `/health`, `/api/lodges`)
+  - Current: 6 (`/`, `/query`, `/debug` (redirects to `/query/preview`), `/status`, `/health`, `/api/lodges`)
   - Task 2: 3 (`/slug/{uuid}`, `/slug/{uuid}/config`, `/slug/{uuid}/debug`)
 - **Admin (requires auth):** 6 endpoints
   - All from Task 2 under `/admin/*` prefix
@@ -1032,8 +1032,8 @@ This section lists ALL endpoints in the ReCal application - current and planned.
 - DELETE: 1 endpoint (`/admin/feeds/{uuid}`)
 
 **By Content Type:**
-- HTML: 6 endpoints (`/`, `/debug`, `/status`, `/slug/{uuid}/config`, `/slug/{uuid}/debug`, plus admin UI future)
-- iCal: 2 endpoints (`/filter`, `/slug/{uuid}`)
+- HTML: 6 endpoints (`/`, `/debug` (redirects to `/query/preview`), `/status`, `/slug/{uuid}/config`, `/slug/{uuid}/debug`, plus admin UI future)
+- iCal: 2 endpoints (`/query`, `/slug/{uuid}`)
 - JSON: 7 endpoints (`/health`, `/api/lodges`, all `/admin/*` endpoints)
 
 **Path Prefixes for Upstream Protection:**

@@ -12,16 +12,16 @@ The application works out of the box with basic regex filtering:
 
 ```
 # Filter by text in SUMMARY field (default)
-/filter?pattern=Meeting
+/query?pattern=Meeting
 
 # Filter by specific field
-/filter?field=DESCRIPTION&pattern=urgent
+/query?field=DESCRIPTION&pattern=urgent
 
 # Multiple filters (AND logic)
-/filter?field1=SUMMARY&pattern1=Meeting&field2=LOCATION&pattern2=Room%20A
+/query?field1=SUMMARY&pattern1=Meeting&field2=LOCATION&pattern2=Room%20A
 
 # Use regex patterns
-/filter?pattern=Project%20[ABC]
+/query?pattern=Project%20[ABC]
 ```
 
 Configuration: Use `config.yaml.example` as your starting point.
@@ -43,7 +43,7 @@ The application was originally built for filtering Par Bricole calendar events. 
      pattern_template: "Grad %s"
    ```
 
-   Usage: `/filter?Grad=4`
+   Usage: `/query?Grad=4`
    - Keeps: Grad 1, 2, 3, 4
    - Filters out: Grad 5, 6, 7, 8, 9, 10
 
@@ -58,7 +58,7 @@ The application was originally built for filtering Par Bricole calendar events. 
          template: "%s PB:"
    ```
 
-   Usage: `/filter?Loge=Göta,Borås`
+   Usage: `/query?Loge=Göta,Borås`
    - Filters out events from "Göta PB:" and "Borås PB:"
 
 3. **ConfirmedOnly**: Keep only confirmed events
@@ -68,7 +68,7 @@ The application was originally built for filtering Par Bricole calendar events. 
      pattern: "CONFIRMED"
    ```
 
-   Usage: `/filter?ConfirmedOnly=true`
+   Usage: `/query?ConfirmedOnly=true`
 
 4. **Installt**: Remove cancelled events
    ```yaml
@@ -77,7 +77,7 @@ The application was originally built for filtering Par Bricole calendar events. 
      pattern: "INSTÄLLT"
    ```
 
-   Usage: `/filter?Installt=true`
+   Usage: `/query?Installt=true`
 
 ### Creating Your Own Custom Filters
 
@@ -115,16 +115,16 @@ filters:
 
 ```
 # Filter out PROJ-001 and PROJ-002
-/filter?project=001,002
+/query?project=001,002
 
 # Keep only high priority
-/filter?priority=high
+/query?priority=high
 
 # Filter out Engineering department
-/filter?dept=Engineering
+/query?dept=Engineering
 
 # Combine filters
-/filter?project=001&priority=high&dept=Engineering
+/query?project=001&priority=high&dept=Engineering
 ```
 
 ### Filter Configuration Reference
@@ -199,8 +199,8 @@ filters:
 
 **URLs:**
 ```
-/filter?team=Engineering,Sales
-/filter?priority=p0,p1
+/query?team=Engineering,Sales
+/query?priority=p0,p1
 ```
 
 ### 2. School Calendar
@@ -227,8 +227,8 @@ filters:
 
 **URLs:**
 ```
-/filter?grade=9,10,11,12
-/filter?event_type=sports
+/query?grade=9,10,11,12
+/query?event_type=sports
 ```
 
 ### 3. Multi-Location Business
@@ -253,7 +253,7 @@ filters:
 
 **URLs:**
 ```
-/filter?office=sf,nyc
+/query?office=sf,nyc
 ```
 
 ## Testing Your Custom Filters
@@ -261,7 +261,7 @@ filters:
 Use debug mode to see what's being filtered:
 
 ```
-/filter?your_filter=value&debug=true
+/query?your_filter=value&debug=true
 ```
 
 This shows:
@@ -286,7 +286,7 @@ Exception: Some filters can be **inverted** to keep only matching events. This r
 1. Copy `config.yaml.example` to `config.yaml`
 2. Add your upstream iCal URL
 3. Define custom filters (optional)
-4. Test with debug mode: `/filter?pattern=test&debug=true`
+4. Test with debug mode: `/query?pattern=test&debug=true`
 5. Deploy!
 
 For deployment instructions, see [DEPLOY.md](DEPLOY.md).

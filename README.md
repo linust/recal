@@ -54,19 +54,19 @@ go build -o recal ./cmd/recal
 
 Filter events with "Meeting" in summary:
 ```
-http://localhost:8080/filter?pattern=Meeting
+http://localhost:8080/query?pattern=Meeting
 ```
 
 Filter by specific field:
 ```
-http://localhost:8080/filter?field=SUMMARY&pattern=Meeting
+http://localhost:8080/query?field=SUMMARY&pattern=Meeting
 ```
 
 ### Multiple Filters
 
 Use indexed parameters for multiple filters (AND logic):
 ```
-http://localhost:8080/filter?field1=SUMMARY&pattern1=Meeting&field2=DESCRIPTION&pattern2=urgent
+http://localhost:8080/query?field1=SUMMARY&pattern1=Meeting&field2=DESCRIPTION&pattern2=urgent
 ```
 
 ### Regex Patterns
@@ -74,13 +74,13 @@ http://localhost:8080/filter?field1=SUMMARY&pattern1=Meeting&field2=DESCRIPTION&
 Use standard regex syntax:
 ```
 # Match multiple alternatives
-http://localhost:8080/filter?pattern=Meeting|Conference|Workshop
+http://localhost:8080/query?pattern=Meeting|Conference|Workshop
 
 # Match with wildcards
-http://localhost:8080/filter?pattern=Project%20[ABC]
+http://localhost:8080/query?pattern=Project%20[ABC]
 
 # Case-insensitive matching (use regex flags)
-http://localhost:8080/filter?pattern=(?i)meeting
+http://localhost:8080/query?pattern=(?i)meeting
 ```
 
 ### Custom Filter Expansions
@@ -95,7 +95,7 @@ filters:
     pattern_template: "\\[%s\\]"
 ```
 
-Then use: `/filter?priority=HIGH,URGENT`
+Then use: `/query?priority=HIGH,URGENT`
 
 **See [CUSTOMIZATION.md](CUSTOMIZATION.md) for detailed examples** including:
 - Corporate calendars (project codes, priorities)
@@ -107,14 +107,14 @@ Then use: `/filter?priority=HIGH,URGENT`
 
 Enable debug mode to see filtering details:
 ```
-http://localhost:8080/filter?pattern=Meeting&debug=true
+http://localhost:8080/query?pattern=Meeting&debug=true
 ```
 
 ### Custom Upstream
 
 Specify a different upstream feed:
 ```
-http://localhost:8080/filter?upstream=https://example.com/calendar.ics&pattern=Meeting
+http://localhost:8080/query?upstream=https://example.com/calendar.ics&pattern=Meeting
 ```
 
 ## Configuration

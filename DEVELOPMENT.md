@@ -34,8 +34,8 @@ make test-ci-local
 - ✅ Starts Python HTTP server for test data
 - ✅ Tests `/health` endpoint
 - ✅ Tests `/status` endpoint
-- ✅ Tests `/filter` endpoint (no filters)
-- ✅ Tests `/filter` with Grad filter
+- ✅ Tests `/query` endpoint (no filters)
+- ✅ Tests `/query` with Grad filter
 - ✅ Tests `/debug` endpoint
 - ✅ Validates iCal output format
 
@@ -269,7 +269,7 @@ docker run --rm \
 # In another terminal, test endpoints manually
 curl -v http://localhost:8080/health
 curl -v http://localhost:8080/filter
-curl -v "http://localhost:8080/filter?Grad=3"
+curl -v "http://localhost:8080/query?Grad=3"
 curl -v "http://localhost:8080/debug?Grad=3" | less
 ```
 

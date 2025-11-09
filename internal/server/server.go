@@ -232,10 +232,10 @@ func (s *Server) DebugHTTP(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(output))
 }
 
-// DebugRedirect redirects /debug to /filter/preview for backward compatibility
+// DebugRedirect redirects /debug to /query/preview for backward compatibility
 func (s *Server) DebugRedirect(w http.ResponseWriter, r *http.Request) {
 	// Build new URL with same query parameters
-	newURL := "/filter/preview"
+	newURL := "/query/preview"
 	if r.URL.RawQuery != "" {
 		newURL += "?" + r.URL.RawQuery
 	}
@@ -927,8 +927,8 @@ func sortSwedish(strings []string) {
 func (s *Server) Start() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.ConfigPage)
-	mux.HandleFunc("/filter", s.ServeHTTP)
-	mux.HandleFunc("/filter/preview", s.DebugHTTP)
+	mux.HandleFunc("/query", s.ServeHTTP)
+	mux.HandleFunc("/query/preview", s.DebugHTTP)
 	mux.HandleFunc("/debug", s.DebugRedirect)
 	mux.HandleFunc("/status", s.Status)
 	mux.HandleFunc("/api/lodges", s.GetLodges)
@@ -936,7 +936,7 @@ func (s *Server) Start() error {
 
 	addr := fmt.Sprintf(":%d", s.cfg.Server.Port)
 	log.Printf("Starting server on %s", addr)
-	log.Printf("Endpoints: / /filter /filter/preview /debug (redirect) /status /api/lodges /health")
+	log.Printf("Endpoints: / /query /query/preview /debug (redirect) /status /api/lodges /health")
 
 	server := &http.Server{
 		Addr:         addr,

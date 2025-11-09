@@ -13,8 +13,8 @@
 Reorganized endpoint structure for better clarity and firewall-based access control.
 
 **Changes Made:**
-1. Added `/filter/preview` endpoint (new canonical debug/preview endpoint)
-2. Added `/debug` redirect → `/filter/preview` (301 Moved Permanently for backward compatibility)
+1. Added `/query/preview` endpoint (new canonical debug/preview endpoint)
+2. Added `/debug` (redirects to `/query/preview`) redirect → `/query/preview` (301 Moved Permanently for backward compatibility)
 3. Updated integration tests with new `TestIntegrationDebugRedirect` test
 4. Updated CI/CD workflow to test both endpoints
 
@@ -37,7 +37,7 @@ Reorganized endpoint structure for better clarity and firewall-based access cont
 - Swedish Freemason calendar event filtering service
 - Go 1.21 application
 - Filters iCal feeds based on grad (degree), loge (lodge), and other criteria
-- Current endpoints: `/`, `/filter`, `/filter/preview`, `/debug` (redirect), `/status`, `/health`, `/api/lodges`
+- Current endpoints: `/`, `/query`, `/query/preview`, `/debug` (redirects to `/query/preview`) (redirect), `/status`, `/health`, `/api/lodges`
 
 ## Task Planning Documents
 
@@ -87,9 +87,9 @@ All tasks are documented in **`TASKS.md`** with detailed specifications:
 
 **Current (6 endpoints):**
 - `GET /` - Config page UI
-- `GET /filter` - Query-based iCal feed
-- `GET /filter/preview` - Debug/preview mode
-- `GET /debug` - Redirects to /filter/preview (301)
+- `GET /query` - Query-based iCal feed
+- `GET /query/preview` - Debug/preview mode
+- `GET /debug` - Redirects to /query/preview (301)
 - `GET /status` - Status page
 - `GET /health` - Health check
 - `GET /api/lodges` - Lodge list (JSON)
@@ -142,8 +142,8 @@ Modified files (not committed):
 git add internal/server/server.go internal/server/integration_test.go .github/workflows/docker-publish.yml
 git commit -m "Implement Task 3: Clean up endpoints
 
-- Add /filter/preview as canonical debug/preview endpoint
-- Add /debug -> /filter/preview redirect for backward compatibility
+- Add /query/preview as canonical debug/preview endpoint
+- Add /debug -> /query/preview redirect for backward compatibility
 - Update integration tests with redirect test cases
 - Update CI workflow to test both endpoints
 

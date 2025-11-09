@@ -104,7 +104,7 @@ curl http://localhost:8080/health
 curl http://localhost:8080/status
 
 # Test filtering (replace with your actual filter params)
-curl "http://localhost:8080/filter?Grad=4"
+curl "http://localhost:8080/query?Grad=4"
 ```
 
 ## Updating Configuration

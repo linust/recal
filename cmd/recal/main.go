@@ -32,7 +32,7 @@ func main() {
 
 	log.Printf("Starting ReCal server...")
 	log.Printf("Endpoints:")
-	log.Printf("  - /filter  - Filter upstream iCal feed")
+	log.Printf("  - /query  - Filter upstream iCal feed")
 	log.Printf("  - /health  - Health check")
 
 	if err := srv.Start(); err != nil {
