@@ -2,7 +2,7 @@
 # The build environment is versioned to ensure consistent builds across all environments
 
 # Stage 1: Builder
-FROM golang:1.21-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 # Install git for go mod (if needed), ca-certificates, and file for verification
 RUN apk add --no-cache git ca-certificates tzdata file

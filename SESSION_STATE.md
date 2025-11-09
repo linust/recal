@@ -207,11 +207,18 @@ Closes #<issue> (if applicable)"
 
 If implementing Task 2, these need answers:
 1. Authentication: UUID security enough or need user accounts?
+   - Yes
 2. Multi-tenancy: Separate feed namespaces per user?
+   - This might be a future extension
 3. Limits: Max feeds per instance, description length?
+   - Description length: 500 characters
+   - Lets not limit the feed number yet, caching should keep it manageable.
 4. Analytics: What statistics beyond access count?
+   - Average feed length, average response time 
 5. Export/Import: Allow feed config export?
+   - Since we will initially keep this as a set of files in a folder we do not need to implement an import/export functionality. 
 6. Versioning: Track feed version history?
+   - Can be tracked with incremental backups. 
 
 ---
 
