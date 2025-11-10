@@ -38,7 +38,7 @@ build:
 		-v "$(PWD):/workspace" \
 		-w /workspace \
 		$(BUILDER_IMAGE) \
-		sh -c 'apk add --no-cache git && go build -ldflags="-w -s" -trimpath -o $(BINARY) ./cmd/recal'
+		sh -c 'apk add --no-cache git && go build -buildvcs=false -ldflags="-w -s" -trimpath -o $(BINARY) ./cmd/recal'
 	@echo "Build complete: ./$(BINARY)"
 
 # Build locally (faster but less reproducible)
