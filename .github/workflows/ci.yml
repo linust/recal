@@ -40,14 +40,46 @@ jobs:
       - name: Build Docker image
         run: make docker-build
 
+      - name: Create test config
+        run: |
+          cat > config.test.yaml <<'EOF'
+          server:
+            port: 8080
+            base_url: "http://localhost:8080"
+          upstream:
+            default_url: "https://example.com/calendar.ics"
+            timeout: 30s
+          cache:
+            max_size: 10
+            max_memory: 20971520
+            default_ttl: 5m
+            min_output_cache: 15m
+            max_ttl: 72h
+          regex:
+            max_execution_time: 1s
+          filters:
+            grade:
+              field: "SUMMARY"
+              pattern_template: "Grad %s"
+            lodge:
+              field: "SUMMARY"
+              names: ["Test Lodge"]
+              patterns:
+                default:
+                  template: "%s PB:"
+            confirmed_only:
+              field: "STATUS"
+              pattern: "CONFIRMED"
+            installt:
+              field: "SUMMARY"
+              pattern: "INSTÄLLT"
+          EOF
+
       - name: Test Docker image
         run: |
-          # Debug: show current directory and files
-          pwd
-          ls -la
-          # Run container with mounted config
+          # Run container with mounted test config
           docker run -d -p 8080:8080 --name test-container \
-            -v "$PWD/config.yaml:/app/config.yaml:ro" \
+            -v "$PWD/config.test.yaml:/app/config.yaml:ro" \
             recal:latest
           sleep 5
           # Check if container is still running
