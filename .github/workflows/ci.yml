@@ -43,7 +43,7 @@ jobs:
       - name: Test Docker image
         run: |
           docker run -d -p 8080:8080 --name test-container \
-            -v $(pwd)/config.yaml:/app/config.yaml:ro \
+            -v $PWD/config.yaml:/app/config.yaml:ro \
             recal:latest
           sleep 5
           # Check if container is still running
