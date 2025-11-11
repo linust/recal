@@ -46,7 +46,18 @@ jobs:
             -v $(pwd)/config.yaml:/app/config.yaml:ro \
             recal:latest
           sleep 5
-          curl -f http://localhost:8080/health || exit 1
+          # Check if container is still running
+          if ! docker ps | grep -q test-container; then
+            echo "Container stopped unexpectedly!"
+            docker logs test-container
+            exit 1
+          fi
+          # Test health endpoint
+          curl -f http://localhost:8080/health || {
+            echo "Health check failed!"
+            docker logs test-container
+            exit 1
+          }
           docker stop test-container
 
   build-binary:
