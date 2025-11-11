@@ -42,8 +42,11 @@ jobs:
 
       - name: Test Docker image
         run: |
+          # Verify config file exists
+          ls -la config.yaml
+          # Run container with mounted config
           docker run -d -p 8080:8080 --name test-container \
-            -v $PWD/config.yaml:/app/config.yaml:ro \
+            -v "$PWD/config.yaml:/app/config.yaml:ro" \
             recal:latest
           sleep 5
           # Check if container is still running
