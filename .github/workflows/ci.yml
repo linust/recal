@@ -42,7 +42,9 @@ jobs:
 
       - name: Test Docker image
         run: |
-          docker run -d -p 8080:8080 --name test-container recal:latest
+          docker run -d -p 8080:8080 --name test-container \
+            -v $(pwd)/config.yaml:/app/config.yaml:ro \
+            recal:latest
           sleep 5
           curl -f http://localhost:8080/health || exit 1
           docker stop test-container
