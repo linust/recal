@@ -172,9 +172,9 @@ jobs:
             exit 1
           }
 
-          # Test actual filtering - fetch upstream feed
+          # Test actual filtering - fetch upstream feed with explicit upstream parameter
           echo "Testing /query endpoint (no filters)..."
-          curl -f "http://localhost:8080/query" -o filtered.ics || {
+          curl -f "http://localhost:8080/query?upstream=http://localhost:8888/sample-feed.ics" -o filtered.ics || {
             echo "Query endpoint failed"
             docker logs test-container
             docker stop test-container
