@@ -305,9 +305,10 @@ func TestApplyLogeFilter(t *testing.T) {
 
 	filtered, matches := engine.Apply(cal)
 
-	// Should remove events matching Moderlogen (both "Moderlogen" and "Moderlogens") and Göta patterns
-	if len(filtered.Events) != 2 {
-		t.Errorf("Expected 2 events after filtering, got %d. Remaining: %v", len(filtered.Events), filtered.Events)
+	// Should KEEP events matching Moderlogen (both "Moderlogen" and "Moderlogens") and Göta patterns
+	// Lodge filter is inverted - it keeps matching events and removes non-matching ones
+	if len(filtered.Events) != 4 {
+		t.Errorf("Expected 4 events after filtering, got %d. Remaining: %v", len(filtered.Events), filtered.Events)
 		for _, e := range filtered.Events {
 			t.Logf("  Remaining: %s", e.Summary)
 		}
@@ -320,18 +321,18 @@ func TestApplyLogeFilter(t *testing.T) {
 		}
 	}
 
-	// Check that the remaining events are correct (only 5 and 6 should remain)
+	// Check that the remaining events are correct (1, 2, 3, and 4 should remain)
 	remainingUIDs := map[string]bool{}
 	for _, e := range filtered.Events {
 		remainingUIDs[e.UID] = true
 	}
 
-	if !remainingUIDs["5"] || !remainingUIDs["6"] {
-		t.Error("Expected events 5 and 6 to remain after filtering")
+	if !remainingUIDs["1"] || !remainingUIDs["2"] || !remainingUIDs["3"] || !remainingUIDs["4"] {
+		t.Error("Expected Moderlogen and Göta events to remain after filtering")
 	}
 
-	if remainingUIDs["1"] || remainingUIDs["2"] || remainingUIDs["3"] || remainingUIDs["4"] {
-		t.Error("Moderlogen and Göta events should have been filtered out")
+	if remainingUIDs["5"] || remainingUIDs["6"] {
+		t.Error("Other Lodge and Regular Event should have been filtered out")
 	}
 }
 

@@ -309,6 +309,9 @@ func TestIntegrationCacheHeaders(t *testing.T) {
 func setupTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
 
+	// Create temp directory for feed storage
+	tempDir := t.TempDir()
+
 	cfg := &config.Config{
 		Server: config.ServerConfig{
 			Port:         8080,
@@ -329,6 +332,11 @@ func setupTestServer(t *testing.T) *httptest.Server {
 		Regex: config.RegexConfig{
 			MaxExecutionTime: 1 * time.Second,
 		},
+		Feeds: config.FeedsConfig{
+			StoragePath:   tempDir,
+			CacheMaxAge:   4 * time.Hour,
+			RetentionDays: 0,
+		},
 		Filters: config.FiltersConfig{
 			Grade: config.GradeFilterConfig{
 				Field:           "SUMMARY",
@@ -336,6 +344,7 @@ func setupTestServer(t *testing.T) *httptest.Server {
 			},
 			Lodge: config.LodgeFilterConfig{
 				Field: "SUMMARY",
+				Names: []string{"Moderlogen", "Göta", "Borås"},
 				Patterns: map[string]config.PatternSpec{
 					"Moderlogen": {Template: "PB, %s:"},
 					"Göta":       {Template: "%s PB:"},
@@ -360,7 +369,6 @@ func setupTestServer(t *testing.T) *httptest.Server {
 	mux.HandleFunc("/", server.ConfigPage)
 	mux.HandleFunc("/query", server.ServeHTTP)
 	mux.HandleFunc("/query/preview", server.DebugHTTP)
-	mux.HandleFunc("/debug", server.DebugRedirect)
 	mux.HandleFunc("/api/lodges", server.GetLodges)
 	mux.HandleFunc("/health", server.Health)
 
@@ -370,6 +378,9 @@ func setupTestServer(t *testing.T) *httptest.Server {
 // setupTestServerWithUpstream creates a test server with custom upstream URL
 func setupTestServerWithUpstream(t *testing.T, upstreamURL string) *httptest.Server {
 	t.Helper()
+
+	// Create temp directory for feed storage
+	tempDir := t.TempDir()
 
 	cfg := &config.Config{
 		Server: config.ServerConfig{
@@ -391,6 +402,11 @@ func setupTestServerWithUpstream(t *testing.T, upstreamURL string) *httptest.Ser
 		Regex: config.RegexConfig{
 			MaxExecutionTime: 1 * time.Second,
 		},
+		Feeds: config.FeedsConfig{
+			StoragePath:   tempDir,
+			CacheMaxAge:   4 * time.Hour,
+			RetentionDays: 0,
+		},
 		Filters: config.FiltersConfig{
 			Grade: config.GradeFilterConfig{
 				Field:           "SUMMARY",
@@ -398,6 +414,7 @@ func setupTestServerWithUpstream(t *testing.T, upstreamURL string) *httptest.Ser
 			},
 			Lodge: config.LodgeFilterConfig{
 				Field: "SUMMARY",
+				Names: []string{"Moderlogen", "Göta", "Borås"},
 				Patterns: map[string]config.PatternSpec{
 					"Moderlogen": {Template: "PB, %s:"},
 					"Göta":       {Template: "%s PB:"},
@@ -422,7 +439,6 @@ func setupTestServerWithUpstream(t *testing.T, upstreamURL string) *httptest.Ser
 	mux.HandleFunc("/", server.ConfigPage)
 	mux.HandleFunc("/query", server.ServeHTTP)
 	mux.HandleFunc("/query/preview", server.DebugHTTP)
-	mux.HandleFunc("/debug", server.DebugRedirect)
 	mux.HandleFunc("/api/lodges", server.GetLodges)
 	mux.HandleFunc("/health", server.Health)
 
@@ -460,60 +476,8 @@ END:VCALENDAR`)
 	}))
 }
 
-// TestIntegrationDebugRedirect tests that /debug redirects to /query/preview
-func TestIntegrationDebugRedirect(t *testing.T) {
-	srv := setupTestServer(t)
-	defer srv.Close()
-
-	// Create HTTP client that doesn't follow redirects
-	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-
-	tests := []struct {
-		name         string
-		oldURL       string
-		wantLocation string
-	}{
-		{
-			name:         "redirect without query params",
-			oldURL:       "/debug",
-			wantLocation: "/query/preview",
-		},
-		{
-			name:         "redirect with query params",
-			oldURL:       "/debug?Grad=3&Loge=Göta",
-			wantLocation: "/query/preview?Grad=3&Loge=G%c3%b6ta", // ö is URL-encoded (lowercase hex)
-		},
-		{
-			name:         "redirect with pattern param",
-			oldURL:       "/debug?pattern=test",
-			wantLocation: "/query/preview?pattern=test",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resp, err := client.Get(srv.URL + tt.oldURL)
-			if err != nil {
-				t.Fatalf("Failed to GET %s: %v", tt.oldURL, err)
-			}
-			defer func() { _ = resp.Body.Close() }()
-
-			// Should be a 301 Moved Permanently redirect
-			if resp.StatusCode != http.StatusMovedPermanently {
-				t.Errorf("Status = %d, want %d (301 Moved Permanently)", resp.StatusCode, http.StatusMovedPermanently)
-			}
-
-			location := resp.Header.Get("Location")
-			if location != tt.wantLocation {
-				t.Errorf("Location = %q, want %q", location, tt.wantLocation)
-			}
-		})
-	}
-}
+// TestIntegrationDebugRedirect was removed along with the /debug endpoint
+// The /debug endpoint was redundant - use /query/preview directly instead
 
 // TestIntegrationServerStartup tests that the server can start and serve requests
 // This is a minimal smoke test for the full server lifecycle

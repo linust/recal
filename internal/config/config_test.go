@@ -560,7 +560,7 @@ func TestGetLodgePattern(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := cfg.GetLodgePattern(tt.lodge)
+			got, _ := cfg.GetLodgePattern(tt.lodge)
 			if got != tt.want {
 				t.Errorf("GetLodgePattern(%q) = %q, want %q (%s)", tt.lodge, got, tt.want, tt.comment)
 			}

@@ -4,6 +4,7 @@ import (
 	"html"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -13,6 +14,10 @@ import (
 
 // getTestConfig returns a test configuration
 func getTestConfig() *config.Config {
+	// Use OS temp dir for feed storage in tests
+	tempDir := "/tmp/recal-test-feeds"
+	_ = os.MkdirAll(tempDir, 0755)
+
 	return &config.Config{
 		Server: config.ServerConfig{
 			Port:         8080,
@@ -31,6 +36,11 @@ func getTestConfig() *config.Config {
 		},
 		Regex: config.RegexConfig{
 			MaxExecutionTime: 1 * time.Second,
+		},
+		Feeds: config.FeedsConfig{
+			StoragePath:   tempDir,
+			CacheMaxAge:   4 * time.Hour,
+			RetentionDays: 0,
 		},
 		Filters: config.FiltersConfig{
 			Grade: config.GradeFilterConfig{
