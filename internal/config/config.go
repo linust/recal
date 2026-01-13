@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -238,9 +239,40 @@ func validate(cfg *Config) error {
 }
 
 // GetLodgePattern returns the pattern template for a given lodge name
-func (c *Config) GetLodgePattern(lodgeName string) string {
+// It also handles normalized lodge names (e.g., "Orebro" -> "Örebro")
+// Returns (patternTemplate, canonicalName)
+func (c *Config) GetLodgePattern(lodgeName string) (string, string) {
+	// Try exact match first
 	if spec, ok := c.Filters.Lodge.Patterns[lodgeName]; ok {
-		return spec.Template
+		return spec.Template, lodgeName
 	}
-	return c.Filters.Lodge.Patterns["default"].Template
+
+	// Try to find a match using denormalized name
+	// Check if any canonical lodge name normalizes to this input
+	for _, canonicalName := range c.Filters.Lodge.Names {
+		if NormalizeSwedish(canonicalName) == lodgeName {
+			// Found a match, use the canonical name
+			if spec, ok := c.Filters.Lodge.Patterns[canonicalName]; ok {
+				return spec.Template, canonicalName
+			}
+			// If no specific pattern, will fall through to default
+			return c.Filters.Lodge.Patterns["default"].Template, canonicalName
+		}
+	}
+
+	return c.Filters.Lodge.Patterns["default"].Template, lodgeName
+}
+
+// NormalizeSwedish normalizes Swedish characters to ASCII equivalents for cleaner URLs
+// Ö/ö -> O/o, Ä/ä -> A/a, Å/å -> A/a
+func NormalizeSwedish(s string) string {
+	replacer := strings.NewReplacer(
+		"Ö", "O",
+		"ö", "o",
+		"Ä", "A",
+		"ä", "a",
+		"Å", "A",
+		"å", "a",
+	)
+	return replacer.Replace(s)
 }

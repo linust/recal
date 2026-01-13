@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/linus/recal/internal/config"
 	"github.com/linus/recal/internal/feeds"
 )
 
@@ -422,6 +423,10 @@ func (s *Server) buildQueryStringFromFilters(filters map[string]string) string {
 
 	for key, value := range filters {
 		if value != "" {
+			// Normalize Swedish characters in Loge filter for cleaner URLs
+			if key == "Loge" {
+				value = config.NormalizeSwedish(value)
+			}
 			parts = append(parts, fmt.Sprintf("%s=%s", key, value))
 		}
 	}

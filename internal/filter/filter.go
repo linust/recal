@@ -135,20 +135,21 @@ func (e *Engine) AddLodgeFilter(lodges string) error {
 			continue
 		}
 
-		// Get the pattern template for this lodge
-		template := e.cfg.GetLodgePattern(name)
+		// Get the pattern template and canonical name for this lodge
+		// This handles normalized names like "Orebro" -> "Örebro"
+		template, canonicalName := e.cfg.GetLodgePattern(name)
 
-		// If the lodge name doesn't end with 's', make trailing 's' optional in the pattern
+		// If the canonical lodge name doesn't end with 's', make trailing 's' optional in the pattern
 		// This allows "Sundsvall" to match both "Sundsvall PB:" and "Sundsvalls PB:"
 		// For names ending in 'n' like "Moderlogen", the pattern "Moderlogens?" will match both:
 		// - "Moderlogen" (the base name)
 		// - "Moderlogens" (with optional trailing 's')
 		// But "Borås" will only match "Borås PB:" (not "Boråss PB:")
 		var lodgePattern string
-		if !strings.HasSuffix(name, "s") {
-			lodgePattern = name + "s?"
+		if !strings.HasSuffix(canonicalName, "s") {
+			lodgePattern = canonicalName + "s?"
 		} else {
-			lodgePattern = name
+			lodgePattern = canonicalName
 		}
 
 		pattern := strings.ReplaceAll(template, "%s", lodgePattern)
@@ -182,7 +183,7 @@ func (e *Engine) AddLodgeFilter(lodges string) error {
 		Fields:  []string{e.cfg.Filters.Lodge.Field},
 		Pattern: re,
 		Raw:     combinedPattern,
-		Invert:  false,
+		Invert:  true, // Keep matching events (inverted filter)
 	})
 
 	return nil
