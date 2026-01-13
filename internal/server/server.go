@@ -197,13 +197,6 @@ func (s *Server) DebugHTTP(w http.ResponseWriter, r *http.Request) {
 	params.Debug = true // Force debug mode on /debug endpoint
 
 	// If no filters specified and no upstream, show error
-	if params.Upstream == "" && len(params.Filters) == 0 &&
-		params.SpecialFilters.Grad == "" && params.SpecialFilters.Loge == "" &&
-		!params.SpecialFilters.RemoveUnconfirmed && !params.SpecialFilters.RemoveInstallt {
-		http.Error(w, "No filters specified. Use /debug?pattern=... or other filter parameters.", http.StatusBadRequest)
-		return
-	}
-
 	// Use default upstream URL if none specified
 	if params.Upstream == "" {
 		params.Upstream = s.cfg.Upstream.DefaultURL
