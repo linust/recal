@@ -119,10 +119,10 @@ jobs:
             cache_max_age: 4h
             retention_days: 0
           filters:
-            grad:
+            grade:
               field: "SUMMARY"
               pattern_template: "Grad %s"
-            loge:
+            lodge:
               field: "SUMMARY"
               names:
                 - "TestLodge"
