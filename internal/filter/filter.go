@@ -67,14 +67,20 @@ func (e *Engine) AddGradeFilter(threshold string) error {
 		return fmt.Errorf("threshold cannot be empty")
 	}
 
-	// Parse the threshold grade number
+	// Parse the threshold grade number (handles 1-12)
 	maxGrade := 0
-	for _, r := range threshold {
-		if r >= '0' && r <= '9' {
-			digit := int(r - '0')
-			if digit > maxGrade {
-				maxGrade = digit
+	for i := 0; i < len(threshold); i++ {
+		if threshold[i] >= '0' && threshold[i] <= '9' {
+			// Parse multi-digit numbers
+			num := 0
+			for i < len(threshold) && threshold[i] >= '0' && threshold[i] <= '9' {
+				num = num*10 + int(threshold[i]-'0')
+				i++
 			}
+			if num > maxGrade {
+				maxGrade = num
+			}
+			i-- // Back up one since the loop will increment
 		}
 	}
 
@@ -83,16 +89,16 @@ func (e *Engine) AddGradeFilter(threshold string) error {
 	}
 
 	// Create a pattern that matches all grades ABOVE the threshold
-	// E.g., for threshold=4, match Grad 5, Grad 6, Grad 7, Grad 8, Grad 9, Grad 10
+	// E.g., for threshold=4, match Grad 5, Grad 6, Grad 7, Grad 8, Grad 9, Grad 10, Grad 11, Grad 12
 	// This will filter OUT (remove) all grades above the threshold
 	var patterns []string
-	for grade := maxGrade + 1; grade <= 10; grade++ {
+	for grade := maxGrade + 1; grade <= 12; grade++ {
 		pattern := fmt.Sprintf(e.cfg.Filters.Grade.PatternTemplate, fmt.Sprintf("%d", grade))
 		patterns = append(patterns, pattern)
 	}
 
 	if len(patterns) == 0 {
-		// If threshold is 10, no grades to filter out
+		// If threshold is 12, no grades to filter out
 		return nil
 	}
 

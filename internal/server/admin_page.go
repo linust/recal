@@ -517,16 +517,18 @@ const adminPageTemplate = `<!DOCTYPE html>
                         <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Grade Filter (Remove events above this grade)</label>
                         <select id="gradFilter" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                             <option value="">No grade filter</option>
-                            <option value="1">Grade 1 (remove 2-10)</option>
-                            <option value="2">Grade 2 (remove 3-10)</option>
-                            <option value="3">Grade 3 (remove 4-10)</option>
-                            <option value="4">Grade 4 (remove 5-10)</option>
-                            <option value="5">Grade 5 (remove 6-10)</option>
-                            <option value="6">Grade 6 (remove 7-10)</option>
-                            <option value="7">Grade 7 (remove 8-10)</option>
-                            <option value="8">Grade 8 (remove 9-10)</option>
-                            <option value="9">Grade 9 (remove 10)</option>
-                            <option value="10">Grade 10 (remove none)</option>
+                            <option value="1">Grade 1 (remove 2-12)</option>
+                            <option value="2">Grade 2 (remove 3-12)</option>
+                            <option value="3">Grade 3 (remove 4-12)</option>
+                            <option value="4">Grade 4 (remove 5-12)</option>
+                            <option value="5">Grade 5 (remove 6-12)</option>
+                            <option value="6">Grade 6 (remove 7-12)</option>
+                            <option value="7">Grade 7 (remove 8-12)</option>
+                            <option value="8">Grade 8 (remove 9-12)</option>
+                            <option value="9">Grade 9 (remove 10-12)</option>
+                            <option value="10">Grade 10 (remove 11-12)</option>
+                            <option value="11">Grade 11 (remove 12)</option>
+                            <option value="12">Grade 12 (remove none)</option>
                         </select>
                     </div>
 
