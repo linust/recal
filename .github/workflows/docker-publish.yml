@@ -114,12 +114,18 @@ jobs:
             max_ttl: 72h
           regex:
             max_execution_time: 1s
+          feeds:
+            storage_path: "/tmp/recal-feeds"
+            cache_max_age: 4h
+            retention_days: 0
           filters:
             grad:
               field: "SUMMARY"
               pattern_template: "Grad %s"
             loge:
               field: "SUMMARY"
+              names:
+                - "TestLodge"
               patterns:
                 default:
                   template: "%s PB:"
@@ -167,9 +173,9 @@ jobs:
           }
 
           # Test actual filtering - fetch upstream feed
-          echo "Testing /filter endpoint (no filters)..."
-          curl -f "http://localhost:8080/filter" -o filtered.ics || {
-            echo "Filter endpoint failed"
+          echo "Testing /query endpoint (no filters)..."
+          curl -f "http://localhost:8080/query" -o filtered.ics || {
+            echo "Query endpoint failed"
             docker logs test-container
             docker stop test-container
             docker rm test-container
@@ -189,7 +195,7 @@ jobs:
 
           # Test Grad filter
           echo "Testing Grad filter..."
-          curl -f "http://localhost:8080/filter?Grad=3" -o grad-filtered.ics || {
+          curl -f "http://localhost:8080/query?Grad=3" -o grad-filtered.ics || {
             echo "Grad filter failed"
             docker logs test-container
             docker stop test-container
@@ -200,7 +206,7 @@ jobs:
 
           # Test filter preview mode
           echo "Testing filter preview mode..."
-          curl -f "http://localhost:8080/filter/preview?Grad=3" > preview.html || {
+          curl -f "http://localhost:8080/query/preview?Grad=3" > preview.html || {
             echo "Filter preview mode failed"
             docker logs test-container
             docker stop test-container
