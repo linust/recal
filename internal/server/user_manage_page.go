@@ -309,6 +309,7 @@ const userManagePageTemplate = `<!DOCTYPE html>
             margin-top: 30px;
             padding-top: 20px;
             border-top: 2px solid #e9ecef;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -396,6 +397,33 @@ const userManagePageTemplate = `<!DOCTYPE html>
             padding: 15px;
             background: #f9f9f9;
             border-radius: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .feed-url-value {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .copy-btn {
+                width: 100%;
+            }
+
+            select {
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
         }
     </style>
 </head>

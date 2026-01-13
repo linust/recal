@@ -236,6 +236,13 @@ const adminPageTemplate = `<!DOCTYPE html>
             margin-top: 15px;
             padding-top: 15px;
             border-top: 1px solid #eee;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .feed-actions button,
+        .feed-actions a {
+            white-space: nowrap;
         }
 
         .modal {
@@ -446,6 +453,29 @@ const adminPageTemplate = `<!DOCTYPE html>
             }
 
             .search-box {
+                width: 100%;
+            }
+
+            .feed-actions {
+                flex-direction: column;
+            }
+
+            .feed-actions button,
+            .feed-actions a {
+                width: 100%;
+                text-align: center;
+            }
+
+            .modal-content {
+                padding: 20px;
+                width: 95%;
+            }
+
+            .filter-row {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-remove {
                 width: 100%;
             }
         }
