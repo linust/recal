@@ -1,0 +1,15 @@
+#!/bin/bash
+# Convenience wrapper to launch bin/recal with all arguments passed through
+# This allows running ./recal instead of ./bin/recal
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Check if bin/recal exists
+if [ ! -f "$SCRIPT_DIR/bin/recal" ]; then
+    echo "Error: bin/recal not found. Please run 'make build' or 'make build-local' first." >&2
+    exit 1
+fi
+
+# Execute bin/recal with all arguments passed through
+exec "$SCRIPT_DIR/bin/recal" "$@"

@@ -134,6 +134,9 @@ func (e *Engine) AddLodgeFilter(lodges string) error {
 
 		// If the lodge name doesn't end with 's', make trailing 's' optional in the pattern
 		// This allows "Sundsvall" to match both "Sundsvall PB:" and "Sundsvalls PB:"
+		// For names ending in 'n' like "Moderlogen", the pattern "Moderlogens?" will match both:
+		// - "Moderlogen" (the base name)
+		// - "Moderlogens" (with optional trailing 's')
 		// But "Borås" will only match "Borås PB:" (not "Boråss PB:")
 		var lodgePattern string
 		if !strings.HasSuffix(name, "s") {

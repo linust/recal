@@ -34,3 +34,10 @@ regex:
 #   /filter?field=SUMMARY&pattern=urgent
 #
 filters: {}
+
+# Named feeds configuration (optional)
+# Allows creating persistent feed URLs that can be updated without changing the URL
+feeds:
+  storage_path: "./data/feeds"  # Directory to store feed configurations
+  cache_max_age: 15m             # How long to cache feed configs in memory
+  retention_days: 0              # Auto-delete inactive feeds after N days (0 = never)

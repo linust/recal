@@ -1,72 +1,34 @@
-# Session State - 2025-11-08
+# Session State - 2025-11-12
 
 ## Current Status
 
-**Last Completed Task:** Task 3 - Clean Up Endpoints (API Redesign)
-**Status:** ✅ COMPLETE - All code implemented, tested, and verified
-**Next Task:** Task 4 - Normalize Lodge Names (ready to implement)
+**Last Completed Work:** Task status audit - discovered Tasks 1 and 4 were already implemented
+**Status:** ✅ COMPLETE - 3 of 4 tasks complete
+**Next Task:** Task 2 - Named Feeds (only remaining task, ~25-30 hours)
 
-## What Was Just Completed
+## Task Organization
 
-### Task 3: Clean Up Endpoints
+All task specifications have been moved to individual markdown files:
 
-Reorganized endpoint structure for better clarity and firewall-based access control.
+### Implemented Tasks
 
-**Changes Made:**
-1. Added `/query/preview` endpoint (new canonical debug/preview endpoint)
-2. Added `/debug` (redirects to `/query/preview`) redirect → `/query/preview` (301 Moved Permanently for backward compatibility)
-3. Updated integration tests with new `TestIntegrationDebugRedirect` test
-4. Updated CI/CD workflow to test both endpoints
+- ✅ [Task 1: Direct Open Links](tasks/implemented/0001-direct-open-links.md)
+- ✅ [Task 3: Clean Up Endpoints](tasks/implemented/0003-clean-up-endpoints.md)
+- ✅ [Task 4: Normalize Lodge Names](tasks/implemented/0004-normalize-lodge-names.md)
 
-**Files Modified:**
-- `internal/server/server.go` - Added DebugRedirect handler, updated routing
-- `internal/server/integration_test.go` - Added redirect tests
-- `.github/workflows/docker-publish.yml` - Updated CI tests
+### Future Tasks
 
-**Test Results:**
-- ✅ All Go tests pass (18 tests)
-- ✅ Docker build successful (recal:test image created)
-- ✅ Manual testing verified redirect works correctly
-- ✅ Backward compatible (old /debug URLs work via redirect)
+1. [Task 2: Named Feeds](tasks/future/0002-named-feeds.md) (~25-30 hours) - **Only remaining task**
 
-**Commits Needed:** You should commit these changes before proceeding to Task 4.
+See [TASKS.md](TASKS.md) for task overview and priority order.
 
 ## Project Context
 
 **Project:** ReCal (Regex Calendar Filter)
 - Swedish Freemason calendar event filtering service
-- Go 1.21 application
+- Go 1.24 application
 - Filters iCal feeds based on grad (degree), loge (lodge), and other criteria
-- Current endpoints: `/`, `/query`, `/query/preview`, `/debug` (redirects to `/query/preview`) (redirect), `/status`, `/health`, `/api/lodges`
-
-## Task Planning Documents
-
-All tasks are documented in **`TASKS.md`** with detailed specifications:
-
-### Completed Tasks
-- ✅ **Task 3:** Clean Up Endpoints (~5 hours, JUST COMPLETED)
-
-### Remaining Tasks (in priority order)
-
-1. **Task 4: Normalize Lodge Names** (~5 hours)
-   - **Problem:** Lodge names inconsistent (e.g., "Sundsvall PB:" vs "Sundsvalls PB:")
-   - **Solution:** Normalize possessive variants (remove trailing 's' for canonical form)
-   - **Goal:** Single "Sundsvall" in UI matches both variants
-   - **Files to modify:** `internal/server/server.go` (GetLodges), filter matching logic
-   - **Ready to implement:** Fully documented in TASKS.md lines 1058-1328
-
-2. **Task 1: Direct Open Links** (~6 hours)
-   - Add "View in Debug Mode" / "Edit Configuration" bidirectional links
-   - Add "Open in Calendar App" buttons (Apple Calendar, Outlook, Google Calendar)
-   - Platform detection for relevant app suggestions
-   - No new endpoints, just UI enhancements
-
-3. **Task 2: Named Feeds** (~25-30 hours)
-   - Save filter configurations with persistent UUID slugs
-   - REST API: `/admin/feeds` (POST/GET/DELETE)
-   - Public access: `/feed/{uuid}`, `/feed/{uuid}/config`, `/feed/{uuid}/preview`
-   - File-based storage initially, SQLite future enhancement
-   - Security: UUID-based access, `/admin/*` protected by upstream auth
+- Current endpoints: `/`, `/query`, `/query/preview`, `/debug` (redirect), `/status`, `/health`, `/api/lodges`
 
 ## Important Design Decisions Made
 
@@ -83,31 +45,9 @@ All tasks are documented in **`TASKS.md`** with detailed specifications:
 - **Authentication:** Delegated to reverse proxy (nginx/Caddy)
 - **No auth in ReCal:** Service stays simple, upstream handles it
 
-### API Endpoints Summary
-
-**Current (6 endpoints):**
-- `GET /` - Config page UI
-- `GET /query` - Query-based iCal feed
-- `GET /query/preview` - Debug/preview mode
-- `GET /debug` - Redirects to /query/preview (301)
-- `GET /status` - Status page
-- `GET /health` - Health check
-- `GET /api/lodges` - Lodge list (JSON)
-
-**After All Tasks (15 endpoints):**
-- Above current endpoints
-- `GET /feed/{uuid}` - Named feed iCal
-- `GET /feed/{uuid}/config` - View/edit named feed
-- `POST /feed/{uuid}/config` - Update named feed
-- `GET /feed/{uuid}/preview` - Named feed preview
-- `POST /admin/feeds` - Create feed
-- `GET /admin/feeds` - List all feeds
-- `GET /admin/feeds/{uuid}` - Get feed details
-- `DELETE /admin/feeds/{uuid}` - Delete feed
-
 ## Development Workflow Tools
 
-Located in project root, **keep these files:**
+Located in project root:
 - `test-local.sh` - Run CI tests locally (85% faster than pushing to GitHub)
 - `watch-ci.sh` - Auto-monitor GitHub Actions and download logs on failure
 - `test-server.sh` - Quick local server testing
@@ -117,42 +57,20 @@ Located in project root, **keep these files:**
 - `DEVELOPMENT.md` - Full workflow guide
 - `WORKFLOW_IMPROVEMENTS.md` - Quick summary
 
-## Recent Conversation Topics
-
-1. **Endpoint naming conventions** - Discussed REST best practices (plural vs singular)
-2. **Why /api/lodges exists** - Dynamically populates lodge checkboxes in UI
-3. **Security requirements** - Added comprehensive security design to Task 2
-4. **Task 4 addition** - User requested lodge name normalization feature
-
 ## Configuration Files
 
 **Main config:** `config.yaml` (points to Swedish Freemason calendar)
 **Test config:** Used in CI, points to `testdata/sample-feed.ics`
 
-## Git Status (before reboot)
+## Git Status
 
-Modified files (not committed):
-- `M internal/server/server.go`
-- `M internal/server/integration_test.go`
+Modified files:
 - `M .github/workflows/docker-publish.yml`
-
-**Recommended next action:** Commit Task 3 changes before starting Task 4
-
-```bash
-git add internal/server/server.go internal/server/integration_test.go .github/workflows/docker-publish.yml
-git commit -m "Implement Task 3: Clean up endpoints
-
-- Add /query/preview as canonical debug/preview endpoint
-- Add /debug -> /query/preview redirect for backward compatibility
-- Update integration tests with redirect test cases
-- Update CI workflow to test both endpoints
-
-Closes #<issue> (if applicable)"
-```
-
-## Current Working Directory
-
-`/Users/linus/Documents/Code/ical-filter`
+- `M internal/server/integration_test.go`
+- `M internal/server/server.go`
+- `?? SESSION_STATE.md`
+- `?? TASKS.md`
+- `?? tasks/`
 
 ## Important Notes
 
@@ -161,66 +79,26 @@ Closes #<issue> (if applicable)"
    - Do not add "🤖 Generated with Claude Code" or Co-Authored-By
    - User wants clean commit messages without AI attribution
 
-2. **Docker status:**
-   - Docker daemon was running, then stopped
-   - Image `recal:test` was successfully built during session
-   - Tests passed during Docker build
-
-3. **Test status:**
-   - All Go tests passing locally
+2. **Test status:**
+   - All Go tests passing
    - Integration tests passing
-   - CI workflow updated but not yet run on GitHub
+   - CI workflow updated
 
-## Next Steps After Reboot
+## Current Working Directory
 
-1. **Verify environment:**
-   ```bash
-   cd /Users/linus/Documents/Code/ical-filter
-   git status
-   go test ./...
-   ```
-
-2. **Commit Task 3 changes** (if desired)
-
-3. **Choose next task:**
-   - **Recommended:** Task 4 (Normalize Lodge Names) - Small, independent, high value
-   - **Alternative:** Task 1 (Direct Open Links) - Also small, UI-focused
-   - **Later:** Task 2 (Named Feeds) - Large, requires persistence layer
-
-4. **Start Task 4 implementation:**
-   - Review spec in TASKS.md (lines 1058-1328)
-   - Implement normalization logic in `internal/server/server.go`
-   - Update filter matching to use variants
-   - Add tests
-   - Run test suite
+`/Users/linus/Documents/Code/ical-filter`
 
 ## Key Files to Reference
 
-- `TASKS.md` - All task specifications
+- `TASKS.md` - Task overview and references
+- `tasks/` - Individual task specifications
 - `DEVELOPMENT.md` - Development workflow
 - `README.md` - Project overview
 - `config.yaml` - Configuration
 - `internal/server/server.go` - Main server code
 - `internal/filter/` - Filter logic
 
-## Open Questions (from Task 2 spec)
-
-If implementing Task 2, these need answers:
-1. Authentication: UUID security enough or need user accounts?
-   - Yes
-2. Multi-tenancy: Separate feed namespaces per user?
-   - This might be a future extension
-3. Limits: Max feeds per instance, description length?
-   - Description length: 500 characters
-   - Lets not limit the feed number yet, caching should keep it manageable.
-4. Analytics: What statistics beyond access count?
-   - Average feed length, average response time
-5. Export/Import: Allow feed config export?
-   - Since we will initially keep this as a set of files in a folder we do not need to implement an import/export functionality.
-6. Versioning: Track feed version history?
-   - Can be tracked with incremental backups.
-
 ---
 
-**Session End Time:** 2025-11-08 ~11:00 UTC
-**Ready to Continue:** Yes - Task 3 complete, Task 4 ready to implement
+**Session Updated:** 2025-11-12
+**Ready to Continue:** Yes - Documentation reorganized, ready for Task 4 implementation

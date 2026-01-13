@@ -7,17 +7,18 @@ A lightweight Go proxy that filters iCal feeds using regular expressions. Downlo
 ## Features
 
 - **Flexible Filtering**: Filter iCal events using regex patterns on any field (SUMMARY, DESCRIPTION, LOCATION, etc.)
+- **Named Feeds**: Create persistent feeds with UUID-based slugs for stable, shareable URLs
 - **Custom Filter Expansions**: Define domain-specific filter shortcuts for your use case
 - **Two-Level Caching**: Efficient caching of both upstream feeds and filtered results (15min minimum)
 - **Debug Mode**: HTML output showing filtered events and match details
 - **Security**: Runs as non-root in distroless container with SSRF protection
 - **Reproducible Builds**: Versioned build environment ensures identical binaries across platforms
+- **Feed Management API**: RESTful API for creating, updating, and monitoring named feeds
 
 
 ## Future Development
 
-- **Named Feeds**: Support for a named slug that expands to a feed query. This to allow adjustment of a feed definition without requiring reconfiguration in clients consuming the feed.
-- **Merging of Feeds**: Mutliple upstream iCal feeds are merged into one continious stream.
+- **Merging of Feeds**: Multiple upstream iCal feeds merged into one continuous stream
 
 ## Quick Start
 
@@ -48,7 +49,92 @@ go build -o recal ./cmd/recal
 ./recal
 ```
 
-## Usage
+## Service Interfaces
+
+ReCal provides both user-facing and administrative interfaces:
+
+### User Interfaces (Public)
+
+**Web Configuration UI** - Interactive feed builder
+```
+http://localhost:8080/
+```
+Browse to the root URL to access a web form for building filter queries visually. The UI pre-fills the upstream URL from your config and provides dropdowns for available filters.
+
+**Query Endpoint** - Get filtered iCal feed
+```
+http://localhost:8080/query?pattern=Meeting
+```
+Returns a filtered iCal feed that can be subscribed to in any calendar application (Google Calendar, Apple Calendar, Outlook, etc.).
+
+**Preview Endpoint** - HTML preview of filtered events
+```
+http://localhost:8080/query/preview?pattern=Meeting
+```
+Shows an HTML page with filtering statistics, active filters, and sample events. Useful for testing filters before subscribing.
+
+**Named Feeds** - Persistent, shareable feed URLs
+```
+http://localhost:8080/feed/{slug}
+```
+Subscribe to a named feed using its UUID slug. The URL stays stable even if filter parameters change.
+
+**User Feed Management** - Self-service feed editing
+```
+http://localhost:8080/feed/{slug}/edit
+```
+End users can manage their own feed filters through a dedicated interface. Features include:
+
+- Update feed name and description
+- Visual filter selection (grade, lodge, special filters)
+- Select All / Deselect All for lodge filters
+- Preview changes before saving
+- Copy feed URL for calendar subscription
+- No admin access required - users can only edit their own feed
+
+### Administrative Interfaces
+
+**Admin Dashboard** - Web UI for managing feeds
+```
+http://localhost:8080/admin
+```
+Full-featured web interface for creating, editing, and deleting named feeds. Includes:
+- Visual feed management with search
+- Create/edit forms with filter builder
+- One-click URL copying
+- Direct links to preview and configure feeds
+- Access statistics for each feed
+- Quick access to status and health endpoints
+
+**Status Dashboard** - Server metrics and statistics
+```
+http://localhost:8080/status
+```
+HTML dashboard showing request metrics, cache statistics, hit ratios, and system uptime.
+
+**Health Check** - JSON health endpoint
+```
+http://localhost:8080/health
+```
+Returns `{"status":"ok","upstream_cache":N,"filtered_cache":M}` for monitoring.
+
+**Feed Management API** - RESTful API for managing named feeds
+```
+POST   /admin/feeds           # Create new feed
+GET    /admin/feeds           # List all feeds
+GET    /admin/feeds/{slug}    # Get feed details
+PUT    /admin/feeds/{slug}    # Update feed
+DELETE /admin/feeds/{slug}    # Delete feed
+GET    /admin/feeds/{slug}/stats  # Get access statistics
+```
+
+**Lodge API** - Get available lodges (domain-specific)
+```
+GET /api/lodges
+```
+Returns JSON list of lodge names for filter dropdowns.
+
+## Usage Examples
 
 ### Basic Filtering
 
@@ -103,18 +189,174 @@ Then use: `/query?priority=HIGH,URGENT`
 - Multi-location businesses (office filtering)
 - Par Bricole calendar (original use case)
 
-### Debug Mode
-
-Enable debug mode to see filtering details:
-```
-http://localhost:8080/query?pattern=Meeting&debug=true
-```
-
 ### Custom Upstream
 
 Specify a different upstream feed:
 ```
 http://localhost:8080/query?upstream=https://example.com/calendar.ics&pattern=Meeting
+```
+
+### Named Feeds
+
+Create persistent, shareable feeds with custom filter configurations. Named feeds use UUID-based slugs and provide stable URLs that won't break when filter parameters change.
+
+#### Creating a Named Feed (Web UI)
+
+Browse to `http://localhost:8080/admin` and use the visual interface to create and manage feeds.
+
+#### Creating a Named Feed (API)
+
+```bash
+curl -X POST http://localhost:8080/admin/feeds \
+  -H "Content-Type: application/json" \
+  -d '{
+    "description": "Team meetings and standup events",
+    "filters": {
+      "pattern": "Meeting|Standup",
+      "field": "SUMMARY"
+    }
+  }'
+```
+
+#### Creating Feeds Programmatically (Direct File Creation)
+
+Named feeds are stored as JSON files in the `feeds.storage_path` directory (default: `./data/feeds`). You can create feeds programmatically by writing JSON files directly:
+
+**File Location**: `./data/feeds/{slug}.json` where `{slug}` is a UUID v4 string
+
+**File Format**:
+```json
+{
+  "slug": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "description": "Team meetings and standups",
+  "created_at": "2026-01-12T10:30:00Z",
+  "updated_at": "2026-01-12T10:30:00Z",
+  "filters": {
+    "pattern": "Meeting|Standup",
+    "field": "SUMMARY",
+    "Grad": "1,2,3"
+  },
+  "access_count": 0,
+  "last_access": "0001-01-01T00:00:00Z",
+  "owner": ""
+}
+```
+
+**Example Script** (Python):
+```python
+import json
+import uuid
+from datetime import datetime
+from pathlib import Path
+
+# Configuration
+feeds_dir = Path("./data/feeds")
+feeds_dir.mkdir(parents=True, exist_ok=True)
+
+# Generate a new feed
+slug = str(uuid.uuid4())
+feed = {
+    "slug": slug,
+    "description": "Generated feed from user registry",
+    "created_at": datetime.utcnow().isoformat() + "Z",
+    "updated_at": datetime.utcnow().isoformat() + "Z",
+    "filters": {
+        "Grad": "1,2,3",
+        "Loge": "Stockholm"
+    },
+    "access_count": 0,
+    "last_access": "0001-01-01T00:00:00Z",
+    "owner": "user@example.com"
+}
+
+# Write to file
+feed_path = feeds_dir / f"{slug}.json"
+with open(feed_path, 'w') as f:
+    json.dump(feed, f, indent=2)
+
+print(f"Created feed: http://localhost:8080/feed/{slug}")
+```
+
+Response:
+```json
+{
+  "slug": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "description": "Team meetings and standup events",
+  "filters": {
+    "pattern": "Meeting|Standup",
+    "field": "SUMMARY"
+  },
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z",
+  "access_count": 0,
+  "urls": {
+    "feed": "http://localhost:8080/feed/a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "edit": "http://localhost:8080/feed/a1b2c3d4-e5f6-7890-abcd-ef1234567890/edit",
+    "preview": "http://localhost:8080/feed/a1b2c3d4-e5f6-7890-abcd-ef1234567890/preview"
+  }
+}
+```
+
+#### Using Named Feeds
+
+**Subscribe to feed:**
+```
+http://localhost:8080/feed/{slug}
+```
+
+**Edit feed filters:**
+```
+http://localhost:8080/feed/{slug}/edit
+```
+
+**Preview filtered events (HTML debug view):**
+```
+http://localhost:8080/feed/{slug}/preview
+```
+
+#### Managing Named Feeds
+
+**List all feeds:**
+```bash
+curl http://localhost:8080/admin/feeds
+```
+
+**Get feed details:**
+```bash
+curl http://localhost:8080/admin/feeds/{slug}
+```
+
+**Update feed:**
+```bash
+curl -X PUT http://localhost:8080/admin/feeds/{slug} \
+  -H "Content-Type: application/json" \
+  -d '{
+    "description": "Updated description",
+    "filters": {
+      "pattern": "NewPattern",
+      "Grad": "1,2,3"
+    }
+  }'
+```
+
+**Delete feed:**
+```bash
+curl -X DELETE http://localhost:8080/admin/feeds/{slug}
+```
+
+**Get feed statistics:**
+```bash
+curl http://localhost:8080/admin/feeds/{slug}/stats
+```
+
+Response:
+```json
+{
+  "slug": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "access_count": 42,
+  "created_at": "2024-01-15T10:30:00Z",
+  "last_accessed_at": "2024-01-15T14:22:00Z"
+}
 ```
 
 ## Configuration

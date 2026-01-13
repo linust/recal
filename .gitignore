@@ -3,8 +3,10 @@
 
 # Configuration with secrets (DO NOT COMMIT)
 config.yaml
-config.yaml.backup
-*.yaml.backup
+*.backup
+
+# feed configurations 
+data/feeds/
 
 # Allow example config
 !config.yaml.example
@@ -27,3 +29,5 @@ Thumbs.db
 #other
 .git.*
 temp/
+
+

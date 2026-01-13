@@ -16,6 +16,7 @@ type Config struct {
 	Cache    CacheConfig    `yaml:"cache"`
 	Regex    RegexConfig    `yaml:"regex"`
 	Filters  FiltersConfig  `yaml:"filters"`
+	Feeds    FeedsConfig    `yaml:"feeds"`
 }
 
 // ServerConfig holds HTTP server configuration
@@ -78,6 +79,13 @@ type SimpleFilterConfig struct {
 	Field       string `yaml:"field"`
 	Pattern     string `yaml:"pattern"`
 	Description string `yaml:"description"`
+}
+
+// FeedsConfig holds named feeds configuration
+type FeedsConfig struct {
+	StoragePath    string        `yaml:"storage_path"`     // Where to store feed data
+	CacheMaxAge    time.Duration `yaml:"cache_max_age"`    // How long to cache feeds in memory
+	RetentionDays  int           `yaml:"retention_days"`   // Auto-delete after N days of inactivity (0 = never)
 }
 
 // Load loads configuration from a YAML file with environment variable overrides
@@ -213,6 +221,17 @@ func validate(cfg *Config) error {
 
 	if _, ok := cfg.Filters.Lodge.Patterns["default"]; !ok {
 		return fmt.Errorf("lodge filter must have a default pattern")
+	}
+
+	// Validate feeds configuration
+	if cfg.Feeds.StoragePath == "" {
+		// Set default if not specified
+		cfg.Feeds.StoragePath = "./data/feeds"
+	}
+
+	if cfg.Feeds.CacheMaxAge <= 0 {
+		// Set default if not specified
+		cfg.Feeds.CacheMaxAge = 15 * time.Minute
 	}
 
 	return nil

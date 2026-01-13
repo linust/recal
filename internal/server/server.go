@@ -12,11 +12,13 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/linus/recal/internal/cache"
 	"github.com/linus/recal/internal/config"
 	"github.com/linus/recal/internal/fetcher"
+	"github.com/linus/recal/internal/feeds"
 	"github.com/linus/recal/internal/filter"
 	"github.com/linus/recal/internal/metrics"
 	"github.com/linus/recal/internal/parser"
@@ -32,6 +34,7 @@ type Server struct {
 	fetcher        *fetcher.Fetcher
 	requestMetrics *metrics.RequestMetrics
 	startTime      time.Time
+	feedManager    *feeds.Manager
 }
 
 // New creates a new server
@@ -45,6 +48,13 @@ func New(cfg *config.Config) *Server {
 	} else {
 		f = fetcher.NewFetcher(cfg)
 	}
+
+	// Initialize feed store and manager
+	feedStore, err := feeds.NewFileStore(cfg.Feeds.StoragePath)
+	if err != nil {
+		log.Fatalf("Failed to initialize feed store: %v", err)
+	}
+	feedManager := feeds.NewManager(feedStore, cfg.Feeds.CacheMaxAge)
 
 	return &Server{
 		cfg: cfg,
@@ -65,6 +75,7 @@ func New(cfg *config.Config) *Server {
 		fetcher:        f,
 		requestMetrics: metrics.NewRequestMetrics(),
 		startTime:      time.Now(),
+		feedManager:    feedManager,
 	}
 }
 
@@ -923,6 +934,72 @@ func sortSwedish(strings []string) {
 	})
 }
 
+// buildQueryStringFromParams builds a URL query string from Params
+func buildQueryStringFromParams(params *Params) string {
+	var parts []string
+
+	if params.SpecialFilters.Grad != "" {
+		parts = append(parts, "Grad="+params.SpecialFilters.Grad)
+	}
+	if params.SpecialFilters.Loge != "" {
+		parts = append(parts, "Loge="+params.SpecialFilters.Loge)
+	}
+	if params.SpecialFilters.RemoveUnconfirmed {
+		parts = append(parts, "RemoveUnconfirmed")
+	}
+	if params.SpecialFilters.RemoveInstallt {
+		parts = append(parts, "RemoveInstallt")
+	}
+
+	return strings.Join(parts, "&")
+}
+
+// routeSlugEndpoints routes /feed/* endpoints
+func (s *Server) routeSlugEndpoints(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+
+	if strings.HasSuffix(path, "/edit") {
+		s.SlugManage(w, r)
+	} else if strings.HasSuffix(path, "/preview") {
+		s.SlugPreview(w, r)
+	} else {
+		// Default: serve the feed
+		s.SlugFeed(w, r)
+	}
+}
+
+// routeAdminFeeds routes /admin/feeds endpoint
+func (s *Server) routeAdminFeeds(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		s.AdminCreateFeed(w, r)
+	case http.MethodGet:
+		s.AdminListFeeds(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// routeAdminFeedsBySlug routes /admin/feeds/{slug} endpoints
+func (s *Server) routeAdminFeedsBySlug(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+
+	if strings.HasSuffix(path, "/stats") {
+		s.AdminGetFeedStats(w, r)
+	} else {
+		switch r.Method {
+		case http.MethodGet:
+			s.AdminGetFeed(w, r)
+		case http.MethodPut:
+			s.AdminUpdateFeed(w, r)
+		case http.MethodDelete:
+			s.AdminDeleteFeed(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}
+}
+
 // Start starts the HTTP server
 func (s *Server) Start() error {
 	mux := http.NewServeMux()
@@ -934,9 +1011,19 @@ func (s *Server) Start() error {
 	mux.HandleFunc("/api/lodges", s.GetLodges)
 	mux.HandleFunc("/health", s.Health)
 
+	// Admin dashboard (web UI)
+	mux.HandleFunc("/admin", s.AdminPage)
+
+	// Named feed endpoints (public)
+	mux.HandleFunc("/feed/", s.routeSlugEndpoints)
+
+	// Admin feed endpoints (protected by upstream auth)
+	mux.HandleFunc("/admin/feeds", s.routeAdminFeeds)
+	mux.HandleFunc("/admin/feeds/", s.routeAdminFeedsBySlug)
+
 	addr := fmt.Sprintf(":%d", s.cfg.Server.Port)
 	log.Printf("Starting server on %s", addr)
-	log.Printf("Endpoints: / /query /query/preview /debug (redirect) /status /api/lodges /health")
+	log.Printf("Endpoints: / /query /query/preview /debug (redirect) /admin /status /api/lodges /health")
 
 	server := &http.Server{
 		Addr:         addr,

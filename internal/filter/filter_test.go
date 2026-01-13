@@ -295,31 +295,43 @@ func TestApplyLogeFilter(t *testing.T) {
 	cal := &parser.Calendar{
 		Events: []*parser.Event{
 			{UID: "1", Summary: "PB, Moderlogen: Annual Meeting"},
-			{UID: "2", Summary: "Göta PB: Monthly Event"},
-			{UID: "3", Summary: "Other Lodge PB: Meeting"},
-			{UID: "4", Summary: "Regular Event"},
+			{UID: "2", Summary: "PB, Moderlogen: Grad 2"},              // Should match "Moderlogen"
+			{UID: "3", Summary: "PB, Moderlogens: Grad 3"},             // Should match "Moderlogens" variant
+			{UID: "4", Summary: "Göta PB: Monthly Event"},
+			{UID: "5", Summary: "Other Lodge PB: Meeting"},
+			{UID: "6", Summary: "Regular Event"},
 		},
 	}
 
 	filtered, matches := engine.Apply(cal)
 
-	// Should remove events matching Moderlogen and Göta patterns
+	// Should remove events matching Moderlogen (both "Moderlogen" and "Moderlogens") and Göta patterns
 	if len(filtered.Events) != 2 {
-		t.Errorf("Expected 2 events after filtering, got %d", len(filtered.Events))
+		t.Errorf("Expected 2 events after filtering, got %d. Remaining: %v", len(filtered.Events), filtered.Events)
+		for _, e := range filtered.Events {
+			t.Logf("  Remaining: %s", e.Summary)
+		}
 	}
 
-	if len(matches) != 2 {
-		t.Errorf("Expected 2 matches (Moderlogen and Göta), got %d", len(matches))
+	if len(matches) != 4 {
+		t.Errorf("Expected 4 matches (3x Moderlogen variants + 1x Göta), got %d", len(matches))
+		for _, m := range matches {
+			t.Logf("  Match: %s - %s", m.EventSummary, m.FilterRaw)
+		}
 	}
 
-	// Check that the remaining events are correct
+	// Check that the remaining events are correct (only 5 and 6 should remain)
 	remainingUIDs := map[string]bool{}
 	for _, e := range filtered.Events {
 		remainingUIDs[e.UID] = true
 	}
 
-	if !remainingUIDs["3"] || !remainingUIDs["4"] {
-		t.Error("Expected events 3 and 4 to remain after filtering")
+	if !remainingUIDs["5"] || !remainingUIDs["6"] {
+		t.Error("Expected events 5 and 6 to remain after filtering")
+	}
+
+	if remainingUIDs["1"] || remainingUIDs["2"] || remainingUIDs["3"] || remainingUIDs["4"] {
+		t.Error("Moderlogen and Göta events should have been filtered out")
 	}
 }
 
