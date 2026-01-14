@@ -236,6 +236,20 @@ func (s *Server) DebugHTTP(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(output))
 }
 
+// Version info variables (set by main package)
+var (
+	ServerVersion   = "dev"
+	ServerBuildTime = "unknown"
+	ServerGitCommit = "unknown"
+)
+
+// Version returns version information
+func (s *Server) Version(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, `{"version":"%s","build_time":"%s","git_commit":"%s"}`,
+		ServerVersion, ServerBuildTime, ServerGitCommit)
+}
+
 // Health handles health check requests
 func (s *Server) Health(w http.ResponseWriter, r *http.Request) {
 	stats := s.upstreamCache.GetStats()
@@ -983,15 +997,25 @@ func (s *Server) routeAdminFeedsBySlug(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// loggingMiddleware logs all incoming requests
+func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("[%s] %s %s (Host: %s, X-Forwarded-For: %s)",
+			r.Method, r.URL.Path, r.URL.RawQuery, r.Host, r.Header.Get("X-Forwarded-For"))
+		next.ServeHTTP(w, r)
+	})
+}
+
 // Start starts the HTTP server
 func (s *Server) Start() error {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", s.ConfigPage)
+	mux.HandleFunc("/", s.Version)  // Root shows version info
 	mux.HandleFunc("/query", s.ServeHTTP)
 	mux.HandleFunc("/query/preview", s.DebugHTTP)
 	mux.HandleFunc("/status", s.Status)
 	mux.HandleFunc("/api/lodges", s.GetLodges)
 	mux.HandleFunc("/health", s.Health)
+	mux.HandleFunc("/version", s.Version)
 
 	// Admin dashboard (web UI)
 	mux.HandleFunc("/admin", s.AdminPage)
@@ -1006,10 +1030,14 @@ func (s *Server) Start() error {
 	addr := fmt.Sprintf(":%d", s.cfg.Server.Port)
 	log.Printf("Starting server on %s", addr)
 	log.Printf("Endpoints: / /query /query/preview /admin /status /api/lodges /health")
+	log.Printf("Admin dashboard available at: %s/admin", s.cfg.Server.BaseURL)
+
+	// Wrap with logging middleware
+	loggingHandler := s.loggingMiddleware(mux)
 
 	server := &http.Server{
 		Addr:         addr,
-		Handler:      mux,
+		Handler:      loggingHandler,
 		ReadTimeout:  s.cfg.Server.ReadTimeout,
 		WriteTimeout: s.cfg.Server.WriteTimeout,
 		IdleTimeout:  s.cfg.Server.IdleTimeout,

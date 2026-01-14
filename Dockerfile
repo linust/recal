@@ -23,14 +23,18 @@ COPY . .
 # Run tests to ensure everything works before building
 RUN go test -v ./...
 
-# Build static binary
+# Build static binary with version info
 # CGO_ENABLED=0 ensures static linking (no dynamic dependencies)
-# -ldflags="-w -s" strips debug info for smaller binary
+# -ldflags injects version information at build time
 # -trimpath removes local path information for reproducibility
 # -buildvcs=false disables VCS stamping (not available in shallow clones)
+ARG VERSION=dev
+ARG BUILD_TIME=unknown
+ARG GIT_COMMIT=unknown
+
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -buildvcs=false \
-    -ldflags="-w -s" \
+    -ldflags="-w -s -X main.Version=${VERSION} -X main.BuildTime=${BUILD_TIME} -X main.GitCommit=${GIT_COMMIT}" \
     -trimpath \
     -o /build/recal \
     ./cmd/recal
