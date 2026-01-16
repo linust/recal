@@ -119,13 +119,15 @@ func (e *Engine) AddGradeFilter(threshold string) error {
 	return nil
 }
 
-// AddLodgeFilter adds a Loge filter (e.g., Loge=Göta,Borås,Moderlogen)
+// AddLodgeFilter adds a lodge exclusion filter.
+// The lodges parameter contains lodges to EXCLUDE (remove from calendar).
+// Events matching these lodges are removed; events not matching any lodge pattern are kept.
 func (e *Engine) AddLodgeFilter(lodges string) error {
 	if lodges == "" {
 		return fmt.Errorf("lodges cannot be empty")
 	}
 
-	// Split lodge names
+	// Split lodge names (these are the lodges to exclude)
 	lodgeNames := strings.Split(lodges, ",")
 	var patterns []string
 
@@ -183,7 +185,7 @@ func (e *Engine) AddLodgeFilter(lodges string) error {
 		Fields:  []string{e.cfg.Filters.Lodge.Field},
 		Pattern: re,
 		Raw:     combinedPattern,
-		Invert:  true, // Keep matching events (inverted filter)
+		Invert:  false, // Remove matching events (excluded lodges)
 	})
 
 	return nil

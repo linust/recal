@@ -282,11 +282,12 @@ func TestApplyGradFilter(t *testing.T) {
 }
 
 // TestApplyLogeFilter tests the Loge filter
-// Validates: Lodge pattern matching with special patterns
+// Validates: Lodge exclusion filter - specified lodges are REMOVED, unrelated events are KEPT
 func TestApplyLogeFilter(t *testing.T) {
 	cfg := getTestConfig()
 	engine := NewEngine(cfg)
 
+	// AddLodgeFilter adds lodges to EXCLUDE (remove from calendar)
 	err := engine.AddLodgeFilter("Moderlogen,Göta")
 	if err != nil {
 		t.Fatalf("AddLodgeFilter() failed: %v", err)
@@ -294,26 +295,27 @@ func TestApplyLogeFilter(t *testing.T) {
 
 	cal := &parser.Calendar{
 		Events: []*parser.Event{
-			{UID: "1", Summary: "PB, Moderlogen: Annual Meeting"},
-			{UID: "2", Summary: "PB, Moderlogen: Grad 2"},              // Should match "Moderlogen"
-			{UID: "3", Summary: "PB, Moderlogens: Grad 3"},             // Should match "Moderlogens" variant
-			{UID: "4", Summary: "Göta PB: Monthly Event"},
-			{UID: "5", Summary: "Other Lodge PB: Meeting"},
-			{UID: "6", Summary: "Regular Event"},
+			{UID: "1", Summary: "PB, Moderlogen: Annual Meeting"},     // Matches exclusion → REMOVED
+			{UID: "2", Summary: "PB, Moderlogen: Grad 2"},             // Matches exclusion → REMOVED
+			{UID: "3", Summary: "PB, Moderlogens: Grad 3"},            // Matches exclusion → REMOVED
+			{UID: "4", Summary: "Göta PB: Monthly Event"},             // Matches exclusion → REMOVED
+			{UID: "5", Summary: "Other Lodge PB: Meeting"},            // Doesn't match exclusion → KEPT
+			{UID: "6", Summary: "Regular Event"},                      // No lodge pattern → KEPT
 		},
 	}
 
 	filtered, matches := engine.Apply(cal)
 
-	// Should KEEP events matching Moderlogen (both "Moderlogen" and "Moderlogens") and Göta patterns
-	// Lodge filter is inverted - it keeps matching events and removes non-matching ones
-	if len(filtered.Events) != 4 {
-		t.Errorf("Expected 4 events after filtering, got %d. Remaining: %v", len(filtered.Events), filtered.Events)
+	// Should REMOVE events matching Moderlogen and Göta (the excluded lodges)
+	// Events not matching any excluded lodge pattern are KEPT
+	if len(filtered.Events) != 2 {
+		t.Errorf("Expected 2 events after filtering, got %d. Remaining:", len(filtered.Events))
 		for _, e := range filtered.Events {
 			t.Logf("  Remaining: %s", e.Summary)
 		}
 	}
 
+	// 4 matches (3x Moderlogen variants + 1x Göta) - these are removed
 	if len(matches) != 4 {
 		t.Errorf("Expected 4 matches (3x Moderlogen variants + 1x Göta), got %d", len(matches))
 		for _, m := range matches {
@@ -321,18 +323,18 @@ func TestApplyLogeFilter(t *testing.T) {
 		}
 	}
 
-	// Check that the remaining events are correct (1, 2, 3, and 4 should remain)
+	// Check that the remaining events are correct (5 and 6 should remain)
 	remainingUIDs := map[string]bool{}
 	for _, e := range filtered.Events {
 		remainingUIDs[e.UID] = true
 	}
 
-	if !remainingUIDs["1"] || !remainingUIDs["2"] || !remainingUIDs["3"] || !remainingUIDs["4"] {
-		t.Error("Expected Moderlogen and Göta events to remain after filtering")
+	if remainingUIDs["1"] || remainingUIDs["2"] || remainingUIDs["3"] || remainingUIDs["4"] {
+		t.Error("Moderlogen and Göta events should have been filtered out (excluded)")
 	}
 
-	if remainingUIDs["5"] || remainingUIDs["6"] {
-		t.Error("Other Lodge and Regular Event should have been filtered out")
+	if !remainingUIDs["5"] || !remainingUIDs["6"] {
+		t.Error("Other Lodge and Regular Event should remain (not excluded)")
 	}
 }
 

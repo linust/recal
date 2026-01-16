@@ -456,7 +456,7 @@ const userManagePageTemplate = `<!DOCTYPE html>
                     Events matching these filters will be <strong>removed</strong> from your calendar.
                     <ul>
                         <li><code>Grade 4</code> removes Grade 5+ events (keeps grades 1-4)</li>
-                        <li><code>Lodge: Stockholm</code> removes Stockholm events</li>
+                        <li><code>Lodge: Göta</code> checked keeps Göta events (unchecked lodges are removed)</li>
                     </ul>
                 </div>
 
@@ -481,13 +481,14 @@ const userManagePageTemplate = `<!DOCTYPE html>
 
                 <div style="margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <label style="margin-bottom: 0;">Lodge Filter (Remove events from these lodges)</label>
+                        <label style="margin-bottom: 0;">Lodge Filter (Keep events from these lodges)</label>
                         <div style="display: flex; gap: 8px;">
                             <button type="button" onclick="selectAllLodges()" style="background: #667eea; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;">Select All</button>
                             <button type="button" onclick="deselectAllLodges()" style="background: #6c757d; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;">Deselect All</button>
                         </div>
                     </div>
                     <div id="lodgeCheckboxes" class="checkbox-group"></div>
+                    <small style="color: #666; display: block; margin-top: 5px;">Events not matching any lodge are always kept</small>
                 </div>
 
                 <div style="margin-bottom: 20px;">
@@ -563,12 +564,15 @@ const userManagePageTemplate = `<!DOCTYPE html>
         }
 
         // Populate lodge checkboxes
+        // Saved Loge filter contains EXCLUDED lodges, so those should be UNchecked
+        // All other lodges should be checked (included by default)
         function populateLodgeCheckboxes() {
             const container = document.getElementById('lodgeCheckboxes');
-            const selected = window.selectedLodgesInitial || [];
+            const excluded = window.selectedLodgesInitial || [];
 
             container.innerHTML = availableLodges.map(lodge => {
-                const checked = selected.includes(lodge) ? 'checked' : '';
+                // Checked = included (kept), Unchecked = excluded (removed)
+                const checked = excluded.includes(lodge) ? '' : 'checked';
                 return '<label class="checkbox-label">' +
                     '<input type="checkbox" value="' + escapeHtml(lodge) + '" ' + checked + '>' +
                     '<span>' + escapeHtml(lodge) + '</span>' +
@@ -594,10 +598,10 @@ const userManagePageTemplate = `<!DOCTYPE html>
             // Reset grade
             document.getElementById('gradFilter').value = originalFilters.Grad || '';
 
-            // Reset lodges
-            const originalLodges = originalFilters.Loge ? originalFilters.Loge.split(',').map(l => l.trim()) : [];
+            // Reset lodges - saved Loge contains EXCLUDED lodges, so invert the check
+            const excludedLodges = originalFilters.Loge ? originalFilters.Loge.split(',').map(l => l.trim()) : [];
             document.querySelectorAll('#lodgeCheckboxes input[type="checkbox"]').forEach(cb => {
-                cb.checked = originalLodges.includes(cb.value);
+                cb.checked = !excludedLodges.includes(cb.value);
             });
 
             // Reset special filters
@@ -653,10 +657,10 @@ const userManagePageTemplate = `<!DOCTYPE html>
             const grad = document.getElementById('gradFilter').value;
             if (grad) filters.Grad = grad;
 
-            // Lodge filter
-            const checkedLodges = Array.from(document.querySelectorAll('#lodgeCheckboxes input:checked'))
+            // Lodge filter - send UNCHECKED lodges (the ones to exclude/remove)
+            const uncheckedLodges = Array.from(document.querySelectorAll('#lodgeCheckboxes input:not(:checked)'))
                 .map(cb => cb.value);
-            if (checkedLodges.length > 0) filters.Loge = checkedLodges.join(',');
+            if (uncheckedLodges.length > 0) filters.Loge = uncheckedLodges.join(',');
 
             // Special filters
             if (document.getElementById('removeUnconfirmed').checked) {

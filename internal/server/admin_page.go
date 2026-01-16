@@ -538,7 +538,7 @@ const adminPageTemplate = `<!DOCTYPE html>
                         <strong>How filters work:</strong> Events matching these filters will be <strong>removed</strong> from the calendar.
                         <ul style="margin: 5px 0 0 20px; padding: 0;">
                             <li><code>Grad: 4</code> removes Grade 5+ events (keeps 1-4)</li>
-                            <li><code>Loge: Stockholm</code> removes Stockholm events</li>
+                            <li><code>Loge: Göta</code> checked keeps Göta events (unchecked lodges are removed)</li>
                             <li><code>pattern: Meeting</code> removes events with "Meeting" in summary/description</li>
                         </ul>
                     </div>
@@ -563,8 +563,15 @@ const adminPageTemplate = `<!DOCTYPE html>
                     </div>
 
                     <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Lodge Filter (Remove events from these lodges)</label>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <label style="font-weight: 600; font-size: 14px; margin: 0;">Lodge Filter (Keep events from these lodges)</label>
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" onclick="selectAllLodges()" style="background: #667eea; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;">Select All</button>
+                                <button type="button" onclick="deselectAllLodges()" style="background: #6c757d; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;">Deselect All</button>
+                            </div>
+                        </div>
                         <div id="lodgeCheckboxes" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; padding: 10px; background: #f9f9f9; border-radius: 4px; max-height: 200px; overflow-y: auto;"></div>
+                        <small style="color: #666; display: block; margin-top: 5px;">Events not matching any lodge are always kept</small>
                     </div>
 
                     <div style="margin-bottom: 15px;">
@@ -786,15 +793,31 @@ const adminPageTemplate = `<!DOCTYPE html>
         }
 
         // Populate lodge checkboxes
-        function populateLodgeCheckboxes(selectedLodges = []) {
+        // excludedLodges contains lodges that should be REMOVED (from saved Loge filter)
+        // Those should be UNchecked; all others should be checked (included)
+        function populateLodgeCheckboxes(excludedLodges = []) {
             const container = document.getElementById('lodgeCheckboxes');
             container.innerHTML = availableLodges.map(lodge => {
-                const checked = selectedLodges.includes(lodge) ? 'checked' : '';
+                const checked = excludedLodges.includes(lodge) ? '' : 'checked';
                 return '<label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; line-height: 1.4; padding: 2px 0;">' +
                     '<input type="checkbox" value="' + escapeHtml(lodge) + '" ' + checked + ' style="margin: 0; flex-shrink: 0; width: 16px; height: 16px;">' +
                     '<span style="white-space: nowrap;">' + escapeHtml(lodge) + '</span>' +
                     '</label>';
             }).join('');
+        }
+
+        // Select all lodges (keep all)
+        function selectAllLodges() {
+            document.querySelectorAll('#lodgeCheckboxes input[type="checkbox"]').forEach(cb => {
+                cb.checked = true;
+            });
+        }
+
+        // Deselect all lodges (remove all)
+        function deselectAllLodges() {
+            document.querySelectorAll('#lodgeCheckboxes input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
         }
 
         // Show edit modal
@@ -882,11 +905,11 @@ const adminPageTemplate = `<!DOCTYPE html>
                 filters.Grad = grad;
             }
 
-            // Lodge filter (collect checked lodges)
-            const checkedLodges = Array.from(document.querySelectorAll('#lodgeCheckboxes input:checked'))
+            // Lodge filter - send UNCHECKED lodges (the ones to exclude/remove)
+            const uncheckedLodges = Array.from(document.querySelectorAll('#lodgeCheckboxes input:not(:checked)'))
                 .map(cb => cb.value);
-            if (checkedLodges.length > 0) {
-                filters.Loge = checkedLodges.join(',');
+            if (uncheckedLodges.length > 0) {
+                filters.Loge = uncheckedLodges.join(',');
             }
 
             // Special filters
