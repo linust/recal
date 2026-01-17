@@ -900,8 +900,14 @@ func (s *Server) ConfigPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	preferSwedish := prefersSwedish(r)
+	templateSource := configPageTemplateEN
+	if preferSwedish {
+		templateSource = configPageTemplateSV
+	}
+
 	// Parse template with base URL
-	tmpl, err := template.New("config").Parse(configPageTemplate)
+	tmpl, err := template.New("config").Parse(templateSource)
 	if err != nil {
 		http.Error(w, "Failed to parse template", http.StatusInternalServerError)
 		log.Printf("Template parse error: %v", err)
