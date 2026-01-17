@@ -284,6 +284,59 @@ func (s *Server) Status(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	preferSwedish := prefersSwedish(r)
+	langAttr := "en"
+	pageTitle := "ReCal - Status"
+	requestMetricsTitle := "Request Metrics"
+	last5Label := "Last 5 Minutes"
+	lastHourLabel := "Last Hour"
+	last24Label := "Last 24 Hours"
+	uptimeLabel := "Uptime"
+	requestsLabel := "requests"
+	sinceStartLabel := "since start"
+	upstreamTitle := "Upstream Cache"
+	filteredTitle := "Filtered Cache"
+	tableMetric := "Metric"
+	tableValue := "Value"
+	entriesLabel := "Entries"
+	memoryLabel := "Memory"
+	hitsLabel := "Hits"
+	missesLabel := "Misses"
+	hitRatioLabel := "Hit Ratio"
+	evictionsLabel := "Evictions"
+	defaultTTLLabel := "Default TTL"
+	minTTLLabel := "Min TTL"
+	maxTTLLabel := "Max TTL"
+	backConfigLabel := "← Back to Configuration"
+	healthCheckLabel := "Health Check (JSON)"
+
+	if preferSwedish {
+		langAttr = "sv"
+		pageTitle = "ReCal - Status"
+		requestMetricsTitle = "Trafikmätning"
+		last5Label = "Senaste 5 minuterna"
+		lastHourLabel = "Senaste timmen"
+		last24Label = "Senaste 24 timmarna"
+		uptimeLabel = "Upptid"
+		requestsLabel = "förfrågningar"
+		sinceStartLabel = "sedan start"
+		upstreamTitle = "Uppströmscache"
+		filteredTitle = "Filtrerad cache"
+		tableMetric = "Mätvärde"
+		tableValue = "Värde"
+		entriesLabel = "Poster"
+		memoryLabel = "Minne"
+		hitsLabel = "Träffar"
+		missesLabel = "Missar"
+		hitRatioLabel = "Träffkvot"
+		evictionsLabel = "Utrensningar"
+		defaultTTLLabel = "Standard-TTL"
+		minTTLLabel = "Min-TTL"
+		maxTTLLabel = "Max-TTL"
+		backConfigLabel = "← Tillbaka till konfiguration"
+		healthCheckLabel = "Hälsokontroll (JSON)"
+	}
+
 	// Get request metrics
 	req5m, req1h, req24h := s.requestMetrics.GetStats()
 
@@ -296,11 +349,11 @@ func (s *Server) Status(w http.ResponseWriter, r *http.Request) {
 
 	// Generate HTML
 	html := fmt.Sprintf(`<!DOCTYPE html>
-<html lang="en">
+<html lang="%s">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReCal - Status</title>
+    <title>%s</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
@@ -368,80 +421,97 @@ func (s *Server) Status(w http.ResponseWriter, r *http.Request) {
     </style>
 </head>
 <body>
-    <h1>ReCal - Status</h1>
+    <h1>%s</h1>
 
-    <h2>Request Metrics</h2>
+    <h2>%s</h2>
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-label">Last 5 Minutes</div>
+            <div class="stat-label">%s</div>
             <div class="stat-value">%d</div>
-            <div class="stat-detail">requests</div>
+            <div class="stat-detail">%s</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">Last Hour</div>
+            <div class="stat-label">%s</div>
             <div class="stat-value">%d</div>
-            <div class="stat-detail">requests</div>
+            <div class="stat-detail">%s</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">Last 24 Hours</div>
+            <div class="stat-label">%s</div>
             <div class="stat-value">%d</div>
-            <div class="stat-detail">requests</div>
+            <div class="stat-detail">%s</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">Uptime</div>
+            <div class="stat-label">%s</div>
             <div class="stat-value">%s</div>
-            <div class="stat-detail">since start</div>
+            <div class="stat-detail">%s</div>
         </div>
     </div>
 
-    <h2>Upstream Cache</h2>
+    <h2>%s</h2>
     <table>
-        <tr><th>Metric</th><th>Value</th></tr>
-        <tr><td>Entries</td><td>%d / %d</td></tr>
-        <tr><td>Memory</td><td>%s / %s</td></tr>
-        <tr><td>Hits</td><td>%d</td></tr>
-        <tr><td>Misses</td><td>%d</td></tr>
-        <tr><td>Hit Ratio</td><td class="%s">%.1f%%</td></tr>
-        <tr><td>Evictions</td><td>%d</td></tr>
-        <tr><td>Default TTL</td><td>%s</td></tr>
-        <tr><td>Min TTL</td><td>%s</td></tr>
-        <tr><td>Max TTL</td><td>%s</td></tr>
+        <tr><th>%s</th><th>%s</th></tr>
+        <tr><td>%s</td><td>%d / %d</td></tr>
+        <tr><td>%s</td><td>%s / %s</td></tr>
+        <tr><td>%s</td><td>%d</td></tr>
+        <tr><td>%s</td><td>%d</td></tr>
+        <tr><td>%s</td><td class="%s">%.1f%%</td></tr>
+        <tr><td>%s</td><td>%d</td></tr>
+        <tr><td>%s</td><td>%s</td></tr>
+        <tr><td>%s</td><td>%s</td></tr>
+        <tr><td>%s</td><td>%s</td></tr>
     </table>
 
-    <h2>Filtered Cache</h2>
+    <h2>%s</h2>
     <table>
-        <tr><th>Metric</th><th>Value</th></tr>
-        <tr><td>Entries</td><td>%d / %d</td></tr>
-        <tr><td>Memory</td><td>%s / %s</td></tr>
-        <tr><td>Hits</td><td>%d</td></tr>
-        <tr><td>Misses</td><td>%d</td></tr>
-        <tr><td>Hit Ratio</td><td class="%s">%.1f%%</td></tr>
-        <tr><td>Evictions</td><td>%d</td></tr>
-        <tr><td>Default TTL</td><td>%s</td></tr>
-        <tr><td>Min TTL</td><td>%s</td></tr>
-        <tr><td>Max TTL</td><td>%s</td></tr>
+        <tr><th>%s</th><th>%s</th></tr>
+        <tr><td>%s</td><td>%d / %d</td></tr>
+        <tr><td>%s</td><td>%s / %s</td></tr>
+        <tr><td>%s</td><td>%d</td></tr>
+        <tr><td>%s</td><td>%d</td></tr>
+        <tr><td>%s</td><td class="%s">%.1f%%</td></tr>
+        <tr><td>%s</td><td>%d</td></tr>
+        <tr><td>%s</td><td>%s</td></tr>
+        <tr><td>%s</td><td>%s</td></tr>
+        <tr><td>%s</td><td>%s</td></tr>
     </table>
 
     <p style="margin-top: 40px; text-align: center;">
-        <a href="/">← Back to Configuration</a> |
-        <a href="/health">Health Check (JSON)</a>
+        <a href="/">%s</a> |
+        <a href="/health">%s</a>
     </p>
 </body>
 </html>`,
-		req5m, req1h, req24h,
-		formatDuration(uptime),
-		upstreamStats.Entries, upstreamStats.MaxSize,
-		formatBytes(upstreamStats.Memory), formatBytes(upstreamStats.MaxMemory),
-		upstreamStats.Hits, upstreamStats.Misses,
-		hitRatioClass(upstreamStats.HitRatio), upstreamStats.HitRatio*100,
-		upstreamStats.Evictions,
-		upstreamStats.DefaultTTL, upstreamStats.MinTTL, upstreamStats.MaxTTL,
-		filteredStats.Entries, filteredStats.MaxSize,
-		formatBytes(filteredStats.Memory), formatBytes(filteredStats.MaxMemory),
-		filteredStats.Hits, filteredStats.Misses,
-		hitRatioClass(filteredStats.HitRatio), filteredStats.HitRatio*100,
-		filteredStats.Evictions,
-		filteredStats.DefaultTTL, filteredStats.MinTTL, filteredStats.MaxTTL)
+		langAttr,
+		pageTitle,
+		pageTitle,
+		requestMetricsTitle,
+		last5Label, req5m, requestsLabel,
+		lastHourLabel, req1h, requestsLabel,
+		last24Label, req24h, requestsLabel,
+		uptimeLabel, formatDuration(uptime), sinceStartLabel,
+		upstreamTitle,
+		tableMetric, tableValue,
+		entriesLabel, upstreamStats.Entries, upstreamStats.MaxSize,
+		memoryLabel, formatBytes(upstreamStats.Memory), formatBytes(upstreamStats.MaxMemory),
+		hitsLabel, upstreamStats.Hits,
+		missesLabel, upstreamStats.Misses,
+		hitRatioLabel, hitRatioClass(upstreamStats.HitRatio), upstreamStats.HitRatio*100,
+		evictionsLabel, upstreamStats.Evictions,
+		defaultTTLLabel, upstreamStats.DefaultTTL,
+		minTTLLabel, upstreamStats.MinTTL,
+		maxTTLLabel, upstreamStats.MaxTTL,
+		filteredTitle,
+		tableMetric, tableValue,
+		entriesLabel, filteredStats.Entries, filteredStats.MaxSize,
+		memoryLabel, formatBytes(filteredStats.Memory), formatBytes(filteredStats.MaxMemory),
+		hitsLabel, filteredStats.Hits,
+		missesLabel, filteredStats.Misses,
+		hitRatioLabel, hitRatioClass(filteredStats.HitRatio), filteredStats.HitRatio*100,
+		evictionsLabel, filteredStats.Evictions,
+		defaultTTLLabel, filteredStats.DefaultTTL,
+		minTTLLabel, filteredStats.MinTTL,
+		maxTTLLabel, filteredStats.MaxTTL,
+		backConfigLabel, healthCheckLabel)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
