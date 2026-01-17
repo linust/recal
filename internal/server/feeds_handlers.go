@@ -60,9 +60,6 @@ func (s *Server) SlugFeed(w http.ResponseWriter, r *http.Request) {
 
 // SlugPreview shows the debug/preview page for a named feed
 func (s *Server) SlugPreview(w http.ResponseWriter, r *http.Request) {
-	// Record request metrics
-	s.requestMetrics.RecordRequest()
-
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -87,13 +84,22 @@ func (s *Server) SlugPreview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Build query string from filters and redirect to /query/preview
+	// Build query string from filters
 	queryString := s.buildQueryStringFromFilters(feed.Filters)
 
-	// Internal redirect by updating the request URL and calling DebugHTTP
+	// Update the request URL for parameter parsing
 	r.URL.Path = "/query/preview"
 	r.URL.RawQuery = queryString
-	s.DebugHTTP(w, r)
+
+	// Determine back URL based on referer - go to admin if came from there, otherwise to feed edit page
+	backURL := "/feed/" + slug + "/edit"
+	if referer := r.Header.Get("Referer"); referer != "" {
+		if strings.Contains(referer, "/admin") {
+			backURL = "/admin"
+		}
+	}
+
+	s.serveDebugPage(w, r, backURL)
 }
 
 // AdminCreateFeed creates a new named feed (admin endpoint)
@@ -415,6 +421,26 @@ func extractSlugFromPath(path, prefix string) string {
 	}
 
 	return strings.TrimSpace(slug)
+}
+
+// prefersSwedish checks if the client prefers Swedish based on Accept-Language header
+func prefersSwedish(r *http.Request) bool {
+	acceptLang := r.Header.Get("Accept-Language")
+	if acceptLang == "" {
+		return false
+	}
+
+	// Simple check: if "sv" appears before "en" or if "sv" is present and "en" is not
+	svIdx := strings.Index(strings.ToLower(acceptLang), "sv")
+	enIdx := strings.Index(strings.ToLower(acceptLang), "en")
+
+	if svIdx == -1 {
+		return false // Swedish not in preferences
+	}
+	if enIdx == -1 {
+		return true // Swedish present, English not
+	}
+	return svIdx < enIdx // Swedish appears before English
 }
 
 // buildQueryStringFromFilters builds a query string from filter parameters

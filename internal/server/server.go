@@ -180,6 +180,17 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // DebugHTTP handles HTTP requests for debug mode (HTML output)
 func (s *Server) DebugHTTP(w http.ResponseWriter, r *http.Request) {
+	// Build back URL - default to main config page with query string
+	backURL := "/"
+	if r.URL.RawQuery != "" {
+		backURL += "?" + r.URL.RawQuery
+	}
+
+	s.serveDebugPage(w, r, backURL)
+}
+
+// serveDebugPage generates and serves the debug/preview page with a custom back URL
+func (s *Server) serveDebugPage(w http.ResponseWriter, r *http.Request, backURL string) {
 	// Record request metrics
 	s.requestMetrics.RecordRequest()
 
@@ -226,8 +237,11 @@ func (s *Server) DebugHTTP(w http.ResponseWriter, r *http.Request) {
 	originalCal := cal
 	filteredCal, matches := engine.Apply(cal)
 
+	// Detect language preference from Accept-Language header
+	preferSwedish := prefersSwedish(r)
+
 	// Generate debug HTML
-	output := s.generateDebugHTML(originalCal, filteredCal, matches, engine, r.URL.RawQuery)
+	output := s.generateDebugHTML(originalCal, filteredCal, matches, engine, backURL, preferSwedish)
 
 	// No caching for debug mode
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -754,17 +768,25 @@ func (s *Server) buildFilters(engine *filter.Engine, params *Params) error {
 }
 
 // generateDebugHTML generates debug mode HTML output
-func (s *Server) generateDebugHTML(original, filtered *parser.Calendar, matches []filter.MatchResult, engine *filter.Engine, queryString string) string {
+// backURL is the URL to go back to (e.g., "/" for main page, "/feed/{slug}/edit" for feed edit page)
+// preferSwedish indicates whether to use Swedish text based on Accept-Language header
+func (s *Server) generateDebugHTML(original, filtered *parser.Calendar, matches []filter.MatchResult, engine *filter.Engine, backURL string, preferSwedish bool) string {
 	stats := filter.GetStats(original, filtered)
 
-	// Build back-to-config URL
-	configURL := "/"
-	if queryString != "" {
-		configURL += "?" + queryString
+	// Determine back button text based on language preference
+	backText := "← Back to configuration"
+	if preferSwedish {
+		backText = "← Tillbaka till konfiguration"
+	}
+
+	// Determine html lang attribute
+	langAttr := "en"
+	if preferSwedish {
+		langAttr = "sv"
 	}
 
 	html := `<!DOCTYPE html>
-<html>
+<html lang="` + langAttr + `">
 <head>
 	<meta charset="UTF-8">
 	<title>ReCal Debug</title>
@@ -783,7 +805,7 @@ func (s *Server) generateDebugHTML(original, filtered *parser.Calendar, matches 
 	</style>
 </head>
 <body>
-	<a href="` + htmlutil.EscapeString(configURL) + `" class="back-link">← Tillbaka till konfiguration</a>
+	<a href="` + htmlutil.EscapeString(backURL) + `" class="back-link">` + backText + `</a>
 	<h1>ReCal Debug Report</h1>
 
 	<div class="stats">
