@@ -57,6 +57,8 @@ jobs:
             max_ttl: 72h
           regex:
             max_execution_time: 1s
+          feeds:
+            storage_path: "/tmp/recal-feeds"
           filters:
             grade:
               field: "SUMMARY"
