@@ -505,6 +505,7 @@ func TestConfigPageEndpoint(t *testing.T) {
 	server := New(cfg)
 
 	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("Accept-Language", "sv")
 	w := httptest.NewRecorder()
 
 	server.ConfigPage(w, req)

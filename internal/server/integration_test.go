@@ -20,8 +20,13 @@ func TestIntegrationConfigPage(t *testing.T) {
 	srv := setupTestServer(t)
 	defer srv.Close()
 
-	// Test GET /
-	resp, err := http.Get(srv.URL + "/")
+	// Test GET / with Swedish Accept-Language to ensure SV copy
+	req, err := http.NewRequest(http.MethodGet, srv.URL+"/", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	req.Header.Set("Accept-Language", "sv")
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("Failed to GET /: %v", err)
 	}
