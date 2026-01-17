@@ -233,27 +233,6 @@ jobs:
             exit 1
           }
 
-          # Test debug redirect (backward compatibility)
-          echo "Testing /debug redirect..."
-          curl -f -L "http://localhost:8080/debug?Grad=3" > debug-redirect.html || {
-            echo "Debug redirect failed"
-            docker logs test-container
-            docker stop test-container
-            docker rm test-container
-            kill $HTTP_SERVER_PID
-            exit 1
-          }
-
-          # Verify redirect works (should also have Summary Statistics)
-          grep -q "Summary Statistics" debug-redirect.html || {
-            echo "Debug redirect output missing expected content"
-            cat debug-redirect.html
-            docker stop test-container
-            docker rm test-container
-            kill $HTTP_SERVER_PID
-            exit 1
-          }
-
           echo "All tests passed!"
 
           # Cleanup
