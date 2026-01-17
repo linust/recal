@@ -266,7 +266,7 @@ func (s *FileStore) saveFeed(feed *NamedFeed) error {
 
 	// Rename temp file to final location (atomic on Unix)
 	if err := os.Rename(tmpPath, feedPath); err != nil {
-		os.Remove(tmpPath) // Clean up temp file
+		_ = os.Remove(tmpPath) // Best effort cleanup
 		return fmt.Errorf("failed to rename temp file: %w", err)
 	}
 

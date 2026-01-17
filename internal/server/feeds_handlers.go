@@ -139,7 +139,9 @@ func (s *Server) AdminCreateFeed(w http.ResponseWriter, r *http.Request) {
 	// Return JSON
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Failed to encode create feed response: %v", err)
+	}
 }
 
 // AdminListFeeds lists all named feeds with pagination and search (admin endpoint)
@@ -247,7 +249,9 @@ func (s *Server) AdminListFeeds(w http.ResponseWriter, r *http.Request) {
 
 	// Return JSON
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Failed to encode feeds list response: %v", err)
+	}
 }
 
 // AdminGetFeed gets details of a specific feed (admin endpoint)
@@ -284,7 +288,9 @@ func (s *Server) AdminGetFeed(w http.ResponseWriter, r *http.Request) {
 
 	// Return JSON
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Failed to encode feed response: %v", err)
+	}
 }
 
 // AdminUpdateFeed updates a feed (admin endpoint)

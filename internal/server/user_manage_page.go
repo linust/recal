@@ -15,11 +15,12 @@ func (s *Server) SlugManage(w http.ResponseWriter, r *http.Request) {
 	s.requestMetrics.RecordRequest()
 
 	// Handle both GET (show page) and PUT (update feed)
-	if r.Method == http.MethodGet {
+	switch r.Method {
+	case http.MethodGet:
 		s.showManagePage(w, r)
-	} else if r.Method == http.MethodPut {
+	case http.MethodPut:
 		s.updateFeedFromManagePage(w, r)
-	} else {
+	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
@@ -121,7 +122,9 @@ func (s *Server) updateFeedFromManagePage(w http.ResponseWriter, r *http.Request
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message":"Feed updated successfully"}`))
+	if _, err := w.Write([]byte(`{"message":"Feed updated successfully"}`)); err != nil {
+		log.Printf("Failed to write feed update response: %v", err)
+	}
 }
 
 const userManagePageTemplate = `<!DOCTYPE html>

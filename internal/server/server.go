@@ -260,8 +260,10 @@ var (
 // Version returns version information
 func (s *Server) Version(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, `{"version":"%s","build_time":"%s","git_commit":"%s"}`,
-		ServerVersion, ServerBuildTime, ServerGitCommit)
+	if _, err := fmt.Fprintf(w, `{"version":"%s","build_time":"%s","git_commit":"%s"}`,
+		ServerVersion, ServerBuildTime, ServerGitCommit); err != nil {
+		log.Printf("Failed to write version response: %v", err)
+	}
 }
 
 // Health handles health check requests
@@ -957,26 +959,6 @@ func sortSwedish(strings []string) {
 	sort.Slice(strings, func(i, j int) bool {
 		return collator.CompareString(strings[i], strings[j]) < 0
 	})
-}
-
-// buildQueryStringFromParams builds a URL query string from Params
-func buildQueryStringFromParams(params *Params) string {
-	var parts []string
-
-	if params.SpecialFilters.Grad != "" {
-		parts = append(parts, "Grad="+params.SpecialFilters.Grad)
-	}
-	if params.SpecialFilters.Loge != "" {
-		parts = append(parts, "Loge="+params.SpecialFilters.Loge)
-	}
-	if params.SpecialFilters.RemoveUnconfirmed {
-		parts = append(parts, "RemoveUnconfirmed")
-	}
-	if params.SpecialFilters.RemoveInstallt {
-		parts = append(parts, "RemoveInstallt")
-	}
-
-	return strings.Join(parts, "&")
 }
 
 // routeSlugEndpoints routes /feed/* endpoints
