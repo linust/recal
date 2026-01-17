@@ -340,7 +340,9 @@ func (s *Server) AdminUpdateFeed(w http.ResponseWriter, r *http.Request) {
 
 	// Return JSON
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Failed to encode updated feed response: %v", err)
+	}
 }
 
 // AdminDeleteFeed deletes a feed (admin endpoint)
@@ -408,7 +410,9 @@ func (s *Server) AdminGetFeedStats(w http.ResponseWriter, r *http.Request) {
 
 	// Return JSON
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stats)
+	if err := json.NewEncoder(w).Encode(stats); err != nil {
+		log.Printf("Failed to encode feed stats response: %v", err)
+	}
 }
 
 // extractSlugFromPath extracts the slug from a URL path
