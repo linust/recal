@@ -851,6 +851,54 @@ func (s *Server) generateDebugHTML(original, filtered *parser.Calendar, matches 
 		backText = "← Tillbaka till konfiguration"
 	}
 
+	pageTitle := "ReCal Debug"
+	reportTitle := "ReCal Debug Report"
+	summaryTitle := "Summary Statistics"
+	totalEventsLabel := "Total events in upstream:"
+	filteredEventsLabel := "Events in filtered output:"
+	removedEventsLabel := "Events removed:"
+	activeFiltersTitle := "Active Filters"
+	noFiltersText := "No filters applied"
+	filterLabel := "Filter"
+	fieldsLabel := "Fields:"
+	invertSuffix := " (inverted - keeps matching)"
+	removedEventsTitle := "Removed Events"
+	noRemovedEventsText := "No events were removed"
+	eventLabel := "Event:"
+	uidLabel := "UID:"
+	matchedFiltersLabel := "Matched filters:"
+	fieldLabel := "Field"
+	matchedFilterLabel := "matched filter"
+	sampleEventsTitle := "Sample Filtered Events"
+	noFilteredEventsText := "No events in filtered output"
+	moreEventsPrefix := "... and "
+	moreEventsSuffix := " more events"
+
+	if preferSwedish {
+		pageTitle = "ReCal Debugg"
+		reportTitle = "ReCal Debugg-rapport"
+		summaryTitle = "Sammanfattning"
+		totalEventsLabel = "Totalt antal händelser i källflödet:"
+		filteredEventsLabel = "Händelser i filtrerat resultat:"
+		removedEventsLabel = "Borttagna händelser:"
+		activeFiltersTitle = "Aktiva filter"
+		noFiltersText = "Inga filter används"
+		filterLabel = "Filter"
+		fieldsLabel = "Fält:"
+		invertSuffix = " (inverterat - behåller matchningar)"
+		removedEventsTitle = "Borttagna händelser"
+		noRemovedEventsText = "Inga händelser togs bort"
+		eventLabel = "Händelse:"
+		uidLabel = "UID:"
+		matchedFiltersLabel = "Matchade filter:"
+		fieldLabel = "Fält"
+		matchedFilterLabel = "matchade filter"
+		sampleEventsTitle = "Exempel på filtrerade händelser"
+		noFilteredEventsText = "Inga händelser i filtrerat resultat"
+		moreEventsPrefix = "... och "
+		moreEventsSuffix = " fler händelser"
+	}
+
 	// Determine html lang attribute
 	langAttr := "en"
 	if preferSwedish {
@@ -861,7 +909,7 @@ func (s *Server) generateDebugHTML(original, filtered *parser.Calendar, matches 
 <html lang="` + langAttr + `">
 <head>
 	<meta charset="UTF-8">
-	<title>ReCal Debug</title>
+	<title>` + pageTitle + `</title>
 	<style>
 		body { font-family: Arial, sans-serif; margin: 20px; max-width: 1200px; margin: 20px auto; }
 		h1 { color: #333; }
@@ -878,35 +926,35 @@ func (s *Server) generateDebugHTML(original, filtered *parser.Calendar, matches 
 </head>
 <body>
 	<a href="` + htmlutil.EscapeString(backURL) + `" class="back-link">` + backText + `</a>
-	<h1>ReCal Debug Report</h1>
+	<h1>` + reportTitle + `</h1>
 
 	<div class="stats">
-		<h2>Summary Statistics</h2>
-		<p><strong>Total events in upstream:</strong> ` + strconv.Itoa(stats.TotalEvents) + `</p>
-		<p><strong>Events in filtered output:</strong> ` + strconv.Itoa(stats.FilteredEvents) + `</p>
-		<p><strong>Events removed:</strong> ` + strconv.Itoa(stats.RemovedEvents) + `</p>
+		<h2>` + summaryTitle + `</h2>
+		<p><strong>` + totalEventsLabel + `</strong> ` + strconv.Itoa(stats.TotalEvents) + `</p>
+		<p><strong>` + filteredEventsLabel + `</strong> ` + strconv.Itoa(stats.FilteredEvents) + `</p>
+		<p><strong>` + removedEventsLabel + `</strong> ` + strconv.Itoa(stats.RemovedEvents) + `</p>
 	</div>
 
-	<h2>Active Filters</h2>`
+	<h2>` + activeFiltersTitle + `</h2>`
 
 	filters := engine.GetFilters()
 	if len(filters) == 0 {
-		html += `<p>No filters applied</p>`
+		html += `<p>` + noFiltersText + `</p>`
 	} else {
 		for i, f := range filters {
 			invertStr := ""
 			if f.Invert {
-				invertStr = " (inverted - keeps matching)"
+				invertStr = invertSuffix
 			}
-			html += fmt.Sprintf(`<div class="filter"><strong>Filter %d:</strong> %s<br><strong>Fields:</strong> %v%s</div>`,
-				i+1, htmlutil.EscapeString(f.Raw), f.Fields, invertStr)
+			html += fmt.Sprintf(`<div class="filter"><strong>%s %d:</strong> %s<br><strong>%s</strong> %v%s</div>`,
+				filterLabel, i+1, htmlutil.EscapeString(f.Raw), fieldsLabel, f.Fields, invertStr)
 		}
 	}
 
-	html += `<h2>Removed Events</h2>`
+	html += `<h2>` + removedEventsTitle + `</h2>`
 
 	if len(matches) == 0 {
-		html += `<p>No events were removed</p>`
+		html += `<p>` + noRemovedEventsText + `</p>`
 	} else {
 		// Group matches by event UID
 		matchesByUID := make(map[string][]filter.MatchResult)
@@ -916,20 +964,20 @@ func (s *Server) generateDebugHTML(original, filtered *parser.Calendar, matches 
 
 		for uid, eventMatches := range matchesByUID {
 			html += `<div class="match">`
-			html += `<p><strong>Event:</strong> ` + htmlutil.EscapeString(eventMatches[0].EventSummary) + `</p>`
-			html += `<p><strong>UID:</strong> <code>` + htmlutil.EscapeString(uid) + `</code></p>`
-			html += `<p><strong>Matched filters:</strong></p><ul>`
+			html += `<p><strong>` + eventLabel + `</strong> ` + htmlutil.EscapeString(eventMatches[0].EventSummary) + `</p>`
+			html += `<p><strong>` + uidLabel + `</strong> <code>` + htmlutil.EscapeString(uid) + `</code></p>`
+			html += `<p><strong>` + matchedFiltersLabel + `</strong></p><ul>`
 			for _, m := range eventMatches {
-				html += `<li>Field <code>` + htmlutil.EscapeString(m.Field) + `</code> matched filter <code>` + htmlutil.EscapeString(m.FilterRaw) + `</code></li>`
+				html += `<li>` + fieldLabel + ` <code>` + htmlutil.EscapeString(m.Field) + `</code> ` + matchedFilterLabel + ` <code>` + htmlutil.EscapeString(m.FilterRaw) + `</code></li>`
 			}
 			html += `</ul></div>`
 		}
 	}
 
-	html += `<h2>Sample Filtered Events</h2>`
+	html += `<h2>` + sampleEventsTitle + `</h2>`
 
 	if len(filtered.Events) == 0 {
-		html += `<p>No events in filtered output</p>`
+		html += `<p>` + noFilteredEventsText + `</p>`
 	} else {
 		limit := 5
 		if len(filtered.Events) < limit {
@@ -952,7 +1000,7 @@ func (s *Server) generateDebugHTML(original, filtered *parser.Calendar, matches 
 		}
 
 		if len(filtered.Events) > limit {
-			html += `<p>... and ` + strconv.Itoa(len(filtered.Events)-limit) + ` more events</p>`
+			html += `<p>` + moreEventsPrefix + strconv.Itoa(len(filtered.Events)-limit) + moreEventsSuffix + `</p>`
 		}
 	}
 
