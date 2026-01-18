@@ -221,6 +221,46 @@ const userManagePageTemplateEN = `<!DOCTYPE html>
             background: #5568d3;
         }
 
+        .calendar-apps {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .calendar-apps-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .calendar-apps-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .calendar-apps-buttons button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .calendar-apps-buttons button:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
         .form-group {
             margin-bottom: 25px;
         }
@@ -448,6 +488,10 @@ const userManagePageTemplateEN = `<!DOCTYPE html>
                 <span id="feedUrl">{{.BaseURL}}/feed/{{.Slug}}</span>
                 <button class="copy-btn" onclick="copyFeedUrl()">Copy</button>
             </div>
+            <div class="calendar-apps">
+                <div class="calendar-apps-label">Add to your calendar app</div>
+                <div id="calendarApps" class="calendar-apps-buttons"></div>
+            </div>
         </div>
 
         <div id="message" class="message"></div>
@@ -526,6 +570,7 @@ const userManagePageTemplateEN = `<!DOCTYPE html>
 
     <script>
         const slug = '{{.Slug}}';
+        const feedUrl = '{{.BaseURL}}/feed/{{.Slug}}';
         let availableLodges = [];
         let originalFilters = {};
         let originalDescription = '';
@@ -534,7 +579,58 @@ const userManagePageTemplateEN = `<!DOCTYPE html>
         document.addEventListener('DOMContentLoaded', () => {
             loadLodges();
             loadCurrentFilters();
+            setupCalendarApps();
         });
+
+        // Setup calendar app buttons
+        function setupCalendarApps() {
+            const container = document.getElementById('calendarApps');
+
+            // Detect platform
+            const ua = navigator.userAgent;
+            const isMac = /Mac/.test(ua) && !/iPhone|iPad/.test(ua);
+            const isIOS = /iPhone|iPad|iPod/.test(ua);
+
+            // Get URLs
+            const webcalUrl = feedUrl.replace(/^https?:\/\//, 'webcal://');
+            const httpsUrl = encodeURIComponent(feedUrl);
+
+            // Apple Calendar (macOS/iOS)
+            if (isMac || isIOS) {
+                const btn = document.createElement('button');
+                btn.innerHTML = '📅 Apple Calendar';
+                btn.onclick = () => { window.location.href = webcalUrl; };
+                container.appendChild(btn);
+            }
+
+            // Google Calendar
+            const googleBtn = document.createElement('button');
+            googleBtn.innerHTML = '🌐 Google Calendar';
+            googleBtn.onclick = () => {
+                window.open('https://calendar.google.com/calendar/render?cid=' + httpsUrl, '_blank');
+            };
+            container.appendChild(googleBtn);
+
+            // Outlook.com
+            const outlookBtn = document.createElement('button');
+            outlookBtn.innerHTML = '📧 Outlook.com';
+            outlookBtn.onclick = () => {
+                window.open('https://outlook.live.com/calendar/0/addfromweb?url=' + httpsUrl, '_blank');
+            };
+            container.appendChild(outlookBtn);
+
+            // Generic webcal
+            const webcalBtn = document.createElement('button');
+            webcalBtn.innerHTML = '📱 Other app';
+            webcalBtn.onclick = () => {
+                navigator.clipboard.writeText(webcalUrl).then(() => {
+                    showMessage('webcal:// URL copied! Paste into your calendar app.', 'success');
+                }).catch(() => {
+                    prompt('Copy this URL into your calendar app:', webcalUrl);
+                });
+            };
+            container.appendChild(webcalBtn);
+        }
 
         // Load available lodges
         async function loadLodges() {
@@ -812,6 +908,46 @@ const userManagePageTemplateSV = `<!DOCTYPE html>
             background: #5568d3;
         }
 
+        .calendar-apps {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .calendar-apps-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .calendar-apps-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .calendar-apps-buttons button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .calendar-apps-buttons button:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
         .form-group {
             margin-bottom: 25px;
         }
@@ -1039,6 +1175,10 @@ const userManagePageTemplateSV = `<!DOCTYPE html>
                 <span id="feedUrl">{{.BaseURL}}/feed/{{.Slug}}</span>
                 <button class="copy-btn" onclick="copyFeedUrl()">Kopiera</button>
             </div>
+            <div class="calendar-apps">
+                <div class="calendar-apps-label">Lägg till i din kalenderapp</div>
+                <div id="calendarApps" class="calendar-apps-buttons"></div>
+            </div>
         </div>
 
         <div id="message" class="message"></div>
@@ -1117,6 +1257,7 @@ const userManagePageTemplateSV = `<!DOCTYPE html>
 
     <script>
         const slug = '{{.Slug}}';
+        const feedUrl = '{{.BaseURL}}/feed/{{.Slug}}';
         let availableLodges = [];
         let originalFilters = {};
         let originalDescription = '';
@@ -1125,7 +1266,58 @@ const userManagePageTemplateSV = `<!DOCTYPE html>
         document.addEventListener('DOMContentLoaded', () => {
             loadLodges();
             loadCurrentFilters();
+            setupCalendarApps();
         });
+
+        // Setup calendar app buttons
+        function setupCalendarApps() {
+            const container = document.getElementById('calendarApps');
+
+            // Detect platform
+            const ua = navigator.userAgent;
+            const isMac = /Mac/.test(ua) && !/iPhone|iPad/.test(ua);
+            const isIOS = /iPhone|iPad|iPod/.test(ua);
+
+            // Get URLs
+            const webcalUrl = feedUrl.replace(/^https?:\/\//, 'webcal://');
+            const httpsUrl = encodeURIComponent(feedUrl);
+
+            // Apple Calendar (macOS/iOS)
+            if (isMac || isIOS) {
+                const btn = document.createElement('button');
+                btn.innerHTML = '📅 Apple Kalender';
+                btn.onclick = () => { window.location.href = webcalUrl; };
+                container.appendChild(btn);
+            }
+
+            // Google Calendar
+            const googleBtn = document.createElement('button');
+            googleBtn.innerHTML = '🌐 Google Kalender';
+            googleBtn.onclick = () => {
+                window.open('https://calendar.google.com/calendar/render?cid=' + httpsUrl, '_blank');
+            };
+            container.appendChild(googleBtn);
+
+            // Outlook.com
+            const outlookBtn = document.createElement('button');
+            outlookBtn.innerHTML = '📧 Outlook.com';
+            outlookBtn.onclick = () => {
+                window.open('https://outlook.live.com/calendar/0/addfromweb?url=' + httpsUrl, '_blank');
+            };
+            container.appendChild(outlookBtn);
+
+            // Generic webcal
+            const webcalBtn = document.createElement('button');
+            webcalBtn.innerHTML = '📱 Annan app';
+            webcalBtn.onclick = () => {
+                navigator.clipboard.writeText(webcalUrl).then(() => {
+                    showMessage('webcal:// URL kopierad! Klistra in i din kalenderapp.', 'success');
+                }).catch(() => {
+                    prompt('Kopiera denna URL till din kalenderapp:', webcalUrl);
+                });
+            };
+            container.appendChild(webcalBtn);
+        }
 
         // Load available lodges
         async function loadLodges() {
