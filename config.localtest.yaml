@@ -1,0 +1,58 @@
+server:
+  port: 8081
+  read_timeout: 15s
+  write_timeout: 15s
+  idle_timeout: 60s
+  base_url: "http://localhost:8081"
+
+upstream:
+  default_url: "http://localhost:8099/testdata/sample-feed.ics"
+  timeout: 30s
+
+cache:
+  max_size: 100
+  max_memory: 20971520
+  default_ttl: 5m
+  min_output_cache: 4h
+  max_ttl: 72h
+
+regex:
+  max_execution_time: 1s
+
+filters:
+  grade:
+    field: "SUMMARY"
+    pattern_template: "Grad %s"
+
+  lodge:
+    field: "SUMMARY"
+    names:
+      - "Borås"
+      - "Göta"
+      - "Jönköping"
+      - "Malmö"
+      - "Moderlogen"
+      - "Sundsvall"
+      - "Vänersborg"
+      - "Vänersborgs"
+      - "Örebro"
+    patterns:
+      "Moderlogen":
+        template: "PB\\, %s:"
+      default:
+        template: "%s PB:"
+
+  confirmed_only:
+    field: "STATUS"
+    pattern: "CONFIRMED"
+    description: "Remove events without STATUS=CONFIRMED"
+
+  installt:
+    field: "SUMMARY"
+    pattern: "INSTÄLLT"
+    description: "Remove events with INSTÄLLT in summary"
+
+feeds:
+  storage_path: "./data/feeds"
+  cache_max_age: 4h
+  retention_days: 0
