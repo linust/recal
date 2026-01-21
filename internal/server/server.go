@@ -42,6 +42,16 @@ type contextKey string
 
 const calendarNameKey contextKey = "calendarName"
 
+// cacheDebug controls verbose cache logging (set CACHE_DEBUG=1 to enable)
+var cacheDebug = os.Getenv("CACHE_DEBUG") == "1"
+
+// logCacheDebug logs cache debug messages if CACHE_DEBUG=1 is set
+func logCacheDebug(format string, args ...interface{}) {
+	if cacheDebug {
+		log.Printf("[CACHE] "+format, args...)
+	}
+}
+
 // New creates a new server
 func New(cfg *config.Config) *Server {
 	// Check if SSRF protection should be disabled (for testing only)
@@ -131,6 +141,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Create base cache key (without content hash)
 	baseCacheKey := createCacheKey(params)
+	logCacheDebug("filtered base-key=%s...%s", baseCacheKey[:min(16, len(baseCacheKey))], baseCacheKey[max(0, len(baseCacheKey)-8):])
 
 	// Fetch upstream feed (this also checks upstream cache)
 	upstreamData, _, err := s.fetchUpstream(r.Context(), params.Upstream)
@@ -140,20 +151,25 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get upstream content hash for content-based cache invalidation
-	upstreamContentHash, _ := s.upstreamCache.GetContentHash(params.Upstream)
+	upstreamContentHash, hashFound := s.upstreamCache.GetContentHash(params.Upstream)
 
 	// Create filtered cache key including the upstream content hash
 	// This ensures filtered cache is invalidated when upstream content changes
 	cacheKey := baseCacheKey
 	if upstreamContentHash != "" {
 		cacheKey = baseCacheKey + ":" + upstreamContentHash[:16] // Use first 16 chars of hash
+		logCacheDebug("filtered cache-key includes content-hash=%s", upstreamContentHash[:16])
+	} else {
+		logCacheDebug("filtered cache-key NO content-hash (hashFound=%v)", hashFound)
 	}
 
 	// Check filtered cache
 	if entry, found := s.filteredCache.Get(cacheKey); found {
+		logCacheDebug("filtered HIT key=%s...%s ttl=%v", cacheKey[:min(16, len(cacheKey))], cacheKey[max(0, len(cacheKey)-8):], time.Until(entry.Expiry).Round(time.Second))
 		s.serveFromCache(w, entry, false)
 		return
 	}
+	logCacheDebug("filtered MISS key=%s...%s", cacheKey[:min(16, len(cacheKey))], cacheKey[max(0, len(cacheKey)-8):])
 
 	// Parse iCal
 	cal, err := parser.Parse(bytes.NewReader(upstreamData))
@@ -188,6 +204,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Cache the result with the content-hash-based key
 	// Use MinOutputCache as the TTL since the hash ensures invalidation when content changes
 	s.filteredCache.Set(cacheKey, output, s.cfg.Cache.MinOutputCache, "", "")
+	logCacheDebug("filtered STORED key=%s...%s ttl=%v size=%d events=%d", cacheKey[:min(16, len(cacheKey))], cacheKey[max(0, len(cacheKey)-8):], s.cfg.Cache.MinOutputCache, len(output), len(filteredCal.Events))
 
 	// Set cache headers for client - use MinOutputCache since content-hash ensures freshness
 	w.Header().Set("Cache-Control", fmt.Sprintf("public, max-age=%d", int(s.cfg.Cache.MinOutputCache.Seconds())))
@@ -584,30 +601,37 @@ func hitRatioClass(ratio float64) string {
 func (s *Server) fetchUpstream(ctx context.Context, upstreamURL string) ([]byte, time.Duration, error) {
 	// Check upstream cache
 	if entry, found := s.upstreamCache.Get(upstreamURL); found {
-		// Try conditional request
+		logCacheDebug("upstream HIT (in-memory) url=%s ttl=%v etag=%s", upstreamURL, time.Until(entry.Expiry).Round(time.Second), entry.ETag)
+
+		// Try conditional request to check if content changed
 		resp, notModified, err := s.fetcher.FetchConditional(ctx, upstreamURL, entry.ETag, entry.LastModified)
 		if err != nil {
+			logCacheDebug("upstream CONDITIONAL-FETCH-ERROR url=%s err=%v", upstreamURL, err)
 			return nil, 0, err
 		}
 
 		if notModified {
-			// Use cached data
+			// Content unchanged - use cached data
+			logCacheDebug("upstream 304-NOT-MODIFIED url=%s (content unchanged, reusing cache)", upstreamURL)
 			return entry.Data, time.Until(entry.Expiry), nil
 		}
 
-		// Content modified, use new data
+		// Content modified - update cache with new data
 		ttl := fetcher.ParseCacheHeaders(resp.CacheControl, resp.Expires)
 		if ttl == 0 {
 			ttl = s.cfg.Cache.DefaultTTL
 		}
+		logCacheDebug("upstream 200-MODIFIED url=%s ttl=%v (content changed, updating cache)", upstreamURL, ttl)
 
 		s.upstreamCache.Set(upstreamURL, resp.Body, ttl, resp.ETag, resp.LastModified)
 		return resp.Body, ttl, nil
 	}
 
 	// No cache entry, fetch fresh
+	logCacheDebug("upstream MISS url=%s (no cache entry)", upstreamURL)
 	resp, err := s.fetcher.Fetch(ctx, upstreamURL)
 	if err != nil {
+		logCacheDebug("upstream FETCH-ERROR url=%s err=%v", upstreamURL, err)
 		return nil, 0, err
 	}
 
@@ -615,6 +639,7 @@ func (s *Server) fetchUpstream(ctx context.Context, upstreamURL string) ([]byte,
 	if ttl == 0 {
 		ttl = s.cfg.Cache.DefaultTTL
 	}
+	logCacheDebug("upstream FETCHED url=%s ttl=%v size=%d etag=%s", upstreamURL, ttl, len(resp.Body), resp.ETag)
 
 	s.upstreamCache.Set(upstreamURL, resp.Body, ttl, resp.ETag, resp.LastModified)
 	return resp.Body, ttl, nil
@@ -1145,6 +1170,20 @@ func (s *Server) routeAdminFeedsBySlug(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// logCacheStatsPeriodically logs cache statistics every 5 minutes when CACHE_DEBUG=1
+func (s *Server) logCacheStatsPeriodically() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		us := s.upstreamCache.GetStats()
+		fs := s.filteredCache.GetStats()
+		log.Printf("[CACHE] STATS upstream: entries=%d/%d hits=%d misses=%d ratio=%.1f%% evictions=%d | filtered: entries=%d/%d hits=%d misses=%d ratio=%.1f%% evictions=%d",
+			us.Entries, us.MaxSize, us.Hits, us.Misses, us.HitRatio*100, us.Evictions,
+			fs.Entries, fs.MaxSize, fs.Hits, fs.Misses, fs.HitRatio*100, fs.Evictions)
+	}
+}
+
 // loggingMiddleware logs all incoming requests
 func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1179,6 +1218,11 @@ func (s *Server) Start() error {
 	log.Printf("Starting server on %s", addr)
 	log.Printf("Endpoints: / /query /query/debug /admin /status /api/lodges /health")
 	log.Printf("Admin dashboard available at: %s/admin", s.cfg.Server.BaseURL)
+
+	// Start background cache stats logging if debug enabled
+	if cacheDebug {
+		go s.logCacheStatsPeriodically()
+	}
 
 	// Wrap with logging middleware
 	loggingHandler := s.loggingMiddleware(mux)
