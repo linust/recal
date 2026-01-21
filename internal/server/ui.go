@@ -347,7 +347,7 @@ const configPageTemplateSV = `<!DOCTYPE html>
     // Preview button - open in debug/preview mode
     document.getElementById('preview-btn').addEventListener('click', () => {
       const currentURL = new URL(generateURL());
-      const previewURL = currentURL.origin + '/query/preview' + currentURL.search;
+      const previewURL = currentURL.origin + '/query/debug' + currentURL.search;
       window.open(previewURL, '_blank');
     });
 
@@ -782,7 +782,7 @@ const configPageTemplateEN = `<!DOCTYPE html>
     // Preview button - open in debug/preview mode
     document.getElementById('preview-btn').addEventListener('click', () => {
       const currentURL = new URL(generateURL());
-      const previewURL = currentURL.origin + '/query/preview' + currentURL.search;
+      const previewURL = currentURL.origin + '/query/debug' + currentURL.search;
       window.open(previewURL, '_blank');
     });
 

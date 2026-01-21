@@ -13,6 +13,7 @@ type Entry struct {
 	Expiry       time.Time
 	ETag         string
 	LastModified string
+	ContentHash  string // SHA256 hash of the content for change detection
 }
 
 // IsExpired checks if the entry has expired
@@ -22,7 +23,7 @@ func (e *Entry) IsExpired() bool {
 
 // Size returns the approximate size of the entry in bytes
 func (e *Entry) Size() int64 {
-	return int64(len(e.Data) + len(e.ETag) + len(e.LastModified) + 24) // +24 for time.Time
+	return int64(len(e.Data) + len(e.ETag) + len(e.LastModified) + len(e.ContentHash) + 24) // +24 for time.Time
 }
 
 // Cache is a thread-safe in-memory cache with TTL support
@@ -117,11 +118,16 @@ func (c *Cache) Set(key string, data []byte, ttl time.Duration, etag string, las
 		ttl = c.maxTTL
 	}
 
+	// Compute content hash for change detection
+	h := sha256.Sum256(data)
+	contentHash := fmt.Sprintf("%x", h)
+
 	newEntry := &Entry{
 		Data:         data,
 		Expiry:       time.Now().Add(ttl),
 		ETag:         etag,
 		LastModified: lastModified,
+		ContentHash:  contentHash,
 	}
 	newSize := newEntry.Size()
 
@@ -143,6 +149,41 @@ func (c *Cache) Set(key string, data []byte, ttl time.Duration, etag string, las
 // SetWithDefaultTTL stores an entry with the default TTL
 func (c *Cache) SetWithDefaultTTL(key string, data []byte, etag string, lastModified string) {
 	c.Set(key, data, c.ttl, etag, lastModified)
+}
+
+// GetContentHash returns only the content hash for a cached entry (without the data)
+// Returns ("", false) if not found or expired
+func (c *Cache) GetContentHash(key string) (string, bool) {
+	c.mu.RLock()
+	entry, exists := c.entries[key]
+	c.mu.RUnlock()
+
+	if !exists || entry.IsExpired() {
+		return "", false
+	}
+
+	return entry.ContentHash, true
+}
+
+// ExtendTTL extends the expiry time of an existing entry
+// This is useful when we know content hasn't changed and want to keep using the cached value
+func (c *Cache) ExtendTTL(key string, ttl time.Duration) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Enforce maximum TTL
+	if ttl > c.maxTTL {
+		ttl = c.maxTTL
+	}
+
+	entry, exists := c.entries[key]
+	if !exists {
+		return false
+	}
+
+	entry.Expiry = time.Now().Add(ttl)
+	c.accessLRU[key] = time.Now()
+	return true
 }
 
 // Delete removes an entry from the cache

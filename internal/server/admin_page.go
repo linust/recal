@@ -539,6 +539,10 @@ const adminPageTemplateEN = `<!DOCTYPE html>
                     <input type="text" id="feedDescription" required maxlength="500" placeholder="e.g., Linus - Grade 4 Stockholm Calendar">
                 </div>
                 <div class="form-group">
+                    <label for="feedOwner">Owner <small style="color: #666; font-weight: normal;">(optional identifier)</small></label>
+                    <input type="text" id="feedOwner" maxlength="200" placeholder="e.g., user@example.com or username">
+                </div>
+                <div class="form-group">
                     <label>Filters * <small style="color: #666;">(at least one required)</small></label>
                     <div style="background: #e8f4f8; padding: 10px; border-radius: 4px; margin-bottom: 10px; font-size: 13px; color: #0c5460;">
                         <strong>How filters work:</strong> Events matching these filters will be <strong>removed</strong> from the calendar.
@@ -722,7 +726,7 @@ const adminPageTemplateEN = `<!DOCTYPE html>
             const html = '<div class="feeds-grid">' + feedsToRender.map(feed => {
                 const feedURL = baseURL + '/feed/' + feed.slug;
                 const configURL = feedURL + '/config';
-                const previewURL = feedURL + '/preview';
+                const debugURL = feedURL + '/debug';
                 const createdDate = new Date(feed.created_at).toLocaleDateString();
                 const lastAccess = feed.last_access ? new Date(feed.last_access).toLocaleString() : 'Never';
 
@@ -741,12 +745,13 @@ const adminPageTemplateEN = `<!DOCTYPE html>
                         '<div class="feed-meta-item"><span>Created:</span><span>' + createdDate + '</span></div>' +
                         '<div class="feed-meta-item"><span>Access Count:</span><span class="badge badge-info">' + feed.access_count + '</span></div>' +
                         '<div class="feed-meta-item"><span>Last Access:</span><span>' + lastAccess + '</span></div>' +
+                        (feed.owner ? '<div class="feed-meta-item"><span>Owner:</span><span>' + escapeHtml(feed.owner) + '</span></div>' : '') +
                     '</div>' +
                     '<div class="feed-filters">' + filterItems + '</div>' +
                     '<div class="feed-actions">' +
                         '<button class="btn btn-small" onclick="copyToClipboard(\'' + feedURL + '\')">Copy URL</button>' +
                         '<button class="btn btn-small" onclick="editFeed(\'' + feed.slug + '\')">Edit</button>' +
-                        '<a href="' + previewURL + '" class="btn btn-small" target="_blank">Preview</a>' +
+                        '<a href="' + debugURL + '" class="btn btn-small" target="_blank">Debug</a>' +
                         '<a href="' + configURL + '" class="btn btn-small" target="_blank" style="background: #6c757d;">Test in Builder</a>' +
                         '<button class="btn btn-small btn-danger" onclick="deleteFeed(\'' + feed.slug + '\')">Delete</button>' +
                     '</div>' +
@@ -837,6 +842,7 @@ const adminPageTemplateEN = `<!DOCTYPE html>
                 document.getElementById('submitBtn').textContent = 'Save Changes';
                 document.getElementById('feedSlug').value = slug;
                 document.getElementById('feedDescription').value = feed.description;
+                document.getElementById('feedOwner').value = feed.owner || '';
                 document.getElementById('modalError').innerHTML = '';
 
                 // Show slug display for existing feeds
@@ -942,12 +948,13 @@ const adminPageTemplateEN = `<!DOCTYPE html>
 
             const method = slug ? 'PUT' : 'POST';
             const url = slug ? '/admin/feeds/' + slug : '/admin/feeds';
+            const owner = document.getElementById('feedOwner').value.trim();
 
             try {
                 const response = await fetch(url, {
                     method: method,
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ description, filters })
+                    body: JSON.stringify({ description, filters, owner: owner || null })
                 });
 
                 if (!response.ok) {
@@ -1493,6 +1500,10 @@ const adminPageTemplateSV = `<!DOCTYPE html>
                     <input type="text" id="feedDescription" required maxlength="500" placeholder="t.ex. Linus - Grad 4 Stockholm-kalender">
                 </div>
                 <div class="form-group">
+                    <label for="feedOwner">Ägare <small style="color: #666; font-weight: normal;">(valfri identifierare)</small></label>
+                    <input type="text" id="feedOwner" maxlength="200" placeholder="t.ex. user@example.com eller användarnamn">
+                </div>
+                <div class="form-group">
                     <label>Filter * <small style="color: #666;">(minst ett krävs)</small></label>
                     <div style="background: #e8f4f8; padding: 10px; border-radius: 4px; margin-bottom: 10px; font-size: 13px; color: #0c5460;">
                         <strong>Så fungerar filtren:</strong> Händelser som matchar dessa filter kommer att <strong>tas bort</strong> från kalendern.
@@ -1676,7 +1687,7 @@ const adminPageTemplateSV = `<!DOCTYPE html>
             const html = '<div class="feeds-grid">' + feedsToRender.map(feed => {
                 const feedURL = baseURL + '/feed/' + feed.slug;
                 const configURL = feedURL + '/config';
-                const previewURL = feedURL + '/preview';
+                const debugURL = feedURL + '/debug';
                 const createdDate = new Date(feed.created_at).toLocaleDateString();
                 const lastAccess = feed.last_access ? new Date(feed.last_access).toLocaleString() : 'Aldrig';
 
@@ -1695,12 +1706,13 @@ const adminPageTemplateSV = `<!DOCTYPE html>
                         '<div class="feed-meta-item"><span>Skapad:</span><span>' + createdDate + '</span></div>' +
                         '<div class="feed-meta-item"><span>Antal åtkomster:</span><span class="badge badge-info">' + feed.access_count + '</span></div>' +
                         '<div class="feed-meta-item"><span>Senast åtkomst:</span><span>' + lastAccess + '</span></div>' +
+                        (feed.owner ? '<div class="feed-meta-item"><span>Ägare:</span><span>' + escapeHtml(feed.owner) + '</span></div>' : '') +
                     '</div>' +
                     '<div class="feed-filters">' + filterItems + '</div>' +
                     '<div class="feed-actions">' +
                         '<button class="btn btn-small" onclick="copyToClipboard(\\'' + feedURL + '\\')">Kopiera URL</button>' +
                         '<button class="btn btn-small" onclick="editFeed(\\'' + feed.slug + '\\')">Redigera</button>' +
-                        '<a href="' + previewURL + '" class="btn btn-small" target="_blank">Förhandsgranska</a>' +
+                        '<a href="' + debugURL + '" class="btn btn-small" target="_blank">Debug</a>' +
                         '<a href="' + configURL + '" class="btn btn-small" target="_blank" style="background: #6c757d;">Testa i byggaren</a>' +
                         '<button class="btn btn-small btn-danger" onclick="deleteFeed(\\'' + feed.slug + '\\')">Radera</button>' +
                     '</div>' +
@@ -1791,6 +1803,7 @@ const adminPageTemplateSV = `<!DOCTYPE html>
                 document.getElementById('submitBtn').textContent = 'Spara ändringar';
                 document.getElementById('feedSlug').value = slug;
                 document.getElementById('feedDescription').value = feed.description;
+                document.getElementById('feedOwner').value = feed.owner || '';
                 document.getElementById('modalError').innerHTML = '';
 
                 // Show slug display for existing feeds
@@ -1896,12 +1909,13 @@ const adminPageTemplateSV = `<!DOCTYPE html>
 
             const method = slug ? 'PUT' : 'POST';
             const url = slug ? '/admin/feeds/' + slug : '/admin/feeds';
+            const owner = document.getElementById('feedOwner').value.trim();
 
             try {
                 const response = await fetch(url, {
                     method: method,
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ description, filters })
+                    body: JSON.stringify({ description, filters, owner: owner || null })
                 });
 
                 if (!response.ok) {

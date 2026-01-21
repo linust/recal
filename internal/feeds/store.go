@@ -20,7 +20,7 @@ type Store interface {
 	Get(slug string) (*NamedFeed, error)
 
 	// Update updates an existing feed
-	Update(slug string, description string, filters map[string]string) (*NamedFeed, error)
+	Update(slug string, description string, filters map[string]string, owner *string) (*NamedFeed, error)
 
 	// Delete removes a feed
 	Delete(slug string) error
@@ -112,7 +112,7 @@ func (s *FileStore) Get(slug string) (*NamedFeed, error) {
 }
 
 // Update updates an existing feed
-func (s *FileStore) Update(slug string, description string, filters map[string]string) (*NamedFeed, error) {
+func (s *FileStore) Update(slug string, description string, filters map[string]string, owner *string) (*NamedFeed, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -142,6 +142,9 @@ func (s *FileStore) Update(slug string, description string, filters map[string]s
 	}
 	if len(filters) > 0 {
 		feed.Filters = filters
+	}
+	if owner != nil {
+		feed.Owner = *owner
 	}
 	feed.UpdatedAt = time.Now()
 

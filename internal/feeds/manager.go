@@ -70,6 +70,11 @@ func (m *Manager) Get(slug string) (*NamedFeed, error) {
 
 // Update updates a feed
 func (m *Manager) Update(slug string, description string, filters map[string]string) (*NamedFeed, error) {
+	return m.UpdateWithOwner(slug, description, filters, nil)
+}
+
+// UpdateWithOwner updates a feed including the owner field
+func (m *Manager) UpdateWithOwner(slug string, description string, filters map[string]string, owner *string) (*NamedFeed, error) {
 	// Validate
 	req := FeedUpdateRequest{
 		Description: description,
@@ -80,7 +85,7 @@ func (m *Manager) Update(slug string, description string, filters map[string]str
 	}
 
 	// Update in store
-	feed, err := m.store.Update(slug, description, filters)
+	feed, err := m.store.Update(slug, description, filters, owner)
 	if err != nil {
 		return nil, err
 	}
@@ -168,6 +173,7 @@ func ToResponse(feed *NamedFeed, baseURL string) *FeedResponse {
 		Filters:     feed.Filters,
 		AccessCount: feed.AccessCount,
 		LastAccess:  feed.LastAccess,
+		Owner:       feed.Owner,
 	}
 }
 
@@ -180,5 +186,7 @@ func ToSummary(feed *NamedFeed) FeedSummary {
 		UpdatedAt:   feed.UpdatedAt,
 		AccessCount: feed.AccessCount,
 		LastAccess:  feed.LastAccess,
+		Owner:       feed.Owner,
+		Filters:     feed.Filters,
 	}
 }

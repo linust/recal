@@ -37,6 +37,11 @@ type Server struct {
 	feedManager    *feeds.Manager
 }
 
+// Context keys for passing data between handlers
+type contextKey string
+
+const calendarNameKey contextKey = "calendarName"
+
 // New creates a new server
 func New(cfg *config.Config) *Server {
 	// Check if SSRF protection should be disabled (for testing only)
@@ -124,19 +129,29 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create cache key for filtered result
-	cacheKey := createCacheKey(params)
+	// Create base cache key (without content hash)
+	baseCacheKey := createCacheKey(params)
 
-	// Check filtered cache first
-	if entry, found := s.filteredCache.Get(cacheKey); found {
-		s.serveFromCache(w, entry, false)
+	// Fetch upstream feed (this also checks upstream cache)
+	upstreamData, _, err := s.fetchUpstream(r.Context(), params.Upstream)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to fetch upstream: %v", err), http.StatusBadGateway)
 		return
 	}
 
-	// Fetch upstream feed
-	upstreamData, upstreamTTL, err := s.fetchUpstream(r.Context(), params.Upstream)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to fetch upstream: %v", err), http.StatusBadGateway)
+	// Get upstream content hash for content-based cache invalidation
+	upstreamContentHash, _ := s.upstreamCache.GetContentHash(params.Upstream)
+
+	// Create filtered cache key including the upstream content hash
+	// This ensures filtered cache is invalidated when upstream content changes
+	cacheKey := baseCacheKey
+	if upstreamContentHash != "" {
+		cacheKey = baseCacheKey + ":" + upstreamContentHash[:16] // Use first 16 chars of hash
+	}
+
+	// Check filtered cache
+	if entry, found := s.filteredCache.Get(cacheKey); found {
+		s.serveFromCache(w, entry, false)
 		return
 	}
 
@@ -156,23 +171,26 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	filteredCal, _ := engine.Apply(cal)
 
-	// Serialize iCal
+	// Get calendar name from context (set by SlugFeed for named feeds)
+	calendarName := ""
+	if name, ok := r.Context().Value(calendarNameKey).(string); ok {
+		calendarName = name
+	}
+
+	// Serialize iCal with optional calendar name
 	var buf bytes.Buffer
-	if err := filteredCal.Serialize(&buf); err != nil {
+	if err := filteredCal.SerializeWithName(&buf, calendarName); err != nil {
 		http.Error(w, fmt.Sprintf("Failed to serialize iCal: %v", err), http.StatusInternalServerError)
 		return
 	}
 	output := buf.Bytes()
 
-	// Cache the result
-	s.filteredCache.Set(cacheKey, output, upstreamTTL, "", "")
+	// Cache the result with the content-hash-based key
+	// Use MinOutputCache as the TTL since the hash ensures invalidation when content changes
+	s.filteredCache.Set(cacheKey, output, s.cfg.Cache.MinOutputCache, "", "")
 
-	// Set cache headers for client
-	cacheDuration := upstreamTTL
-	if cacheDuration < s.cfg.Cache.MinOutputCache {
-		cacheDuration = s.cfg.Cache.MinOutputCache
-	}
-	w.Header().Set("Cache-Control", fmt.Sprintf("public, max-age=%d", int(cacheDuration.Seconds())))
+	// Set cache headers for client - use MinOutputCache since content-hash ensures freshness
+	w.Header().Set("Cache-Control", fmt.Sprintf("public, max-age=%d", int(s.cfg.Cache.MinOutputCache.Seconds())))
 	w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(output)
@@ -1085,6 +1103,8 @@ func (s *Server) routeSlugEndpoints(w http.ResponseWriter, r *http.Request) {
 
 	if strings.HasSuffix(path, "/edit") {
 		s.SlugManage(w, r)
+	} else if strings.HasSuffix(path, "/debug") {
+		s.SlugDebug(w, r)
 	} else if strings.HasSuffix(path, "/preview") {
 		s.SlugPreview(w, r)
 	} else {
@@ -1139,7 +1159,7 @@ func (s *Server) Start() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.Version)  // Root shows version info
 	mux.HandleFunc("/query", s.ServeHTTP)
-	mux.HandleFunc("/query/preview", s.DebugHTTP)
+	mux.HandleFunc("/query/debug", s.DebugHTTP)
 	mux.HandleFunc("/status", s.Status)
 	mux.HandleFunc("/api/lodges", s.GetLodges)
 	mux.HandleFunc("/health", s.Health)
@@ -1157,7 +1177,7 @@ func (s *Server) Start() error {
 
 	addr := fmt.Sprintf(":%d", s.cfg.Server.Port)
 	log.Printf("Starting server on %s", addr)
-	log.Printf("Endpoints: / /query /query/preview /admin /status /api/lodges /health")
+	log.Printf("Endpoints: / /query /query/debug /admin /status /api/lodges /health")
 	log.Printf("Admin dashboard available at: %s/admin", s.cfg.Server.BaseURL)
 
 	// Wrap with logging middleware

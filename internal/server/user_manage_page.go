@@ -66,11 +66,13 @@ func (s *Server) showManagePage(w http.ResponseWriter, r *http.Request) {
 		Slug        string
 		Description string
 		Filters     map[string]string
+		Owner       string
 	}{
 		BaseURL:     s.cfg.Server.BaseURL,
 		Slug:        feed.Slug,
 		Description: feed.Description,
 		Filters:     feed.Filters,
+		Owner:       feed.Owner,
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -492,6 +494,7 @@ const userManagePageTemplateEN = `<!DOCTYPE html>
                 <div class="calendar-apps-label">Add to your calendar app</div>
                 <div id="calendarApps" class="calendar-apps-buttons"></div>
             </div>
+            {{if .Owner}}<div style="margin-top: 10px; font-size: 13px; color: #666;"><span style="font-weight: 600;">Owner:</span> {{.Owner}}</div>{{end}}
         </div>
 
         <div id="message" class="message"></div>
@@ -562,7 +565,7 @@ const userManagePageTemplateEN = `<!DOCTYPE html>
 
             <div class="btn-group">
                 <button type="button" class="btn btn-secondary" onclick="resetForm()" style="background: #dc3545;">Cancel</button>
-                <button type="button" class="btn btn-secondary" onclick="previewFeed()">Preview Changes</button>
+                <button type="button" class="btn btn-secondary" onclick="previewFeed()">Preview Calendar</button>
                 <button type="submit" class="btn btn-primary">Save Changes</button>
             </div>
         </form>
@@ -1179,6 +1182,7 @@ const userManagePageTemplateSV = `<!DOCTYPE html>
                 <div class="calendar-apps-label">Lägg till i din kalenderapp</div>
                 <div id="calendarApps" class="calendar-apps-buttons"></div>
             </div>
+            {{if .Owner}}<div style="margin-top: 10px; font-size: 13px; color: #666;"><span style="font-weight: 600;">Ägare:</span> {{.Owner}}</div>{{end}}
         </div>
 
         <div id="message" class="message"></div>
@@ -1249,7 +1253,7 @@ const userManagePageTemplateSV = `<!DOCTYPE html>
 
             <div class="btn-group">
                 <button type="button" class="btn btn-secondary" onclick="resetForm()" style="background: #dc3545;">Avbryt</button>
-                <button type="button" class="btn btn-secondary" onclick="previewFeed()">Förhandsgranska</button>
+                <button type="button" class="btn btn-secondary" onclick="previewFeed()">Förhandsgranska kalender</button>
                 <button type="submit" class="btn btn-primary">Spara ändringar</button>
             </div>
         </form>

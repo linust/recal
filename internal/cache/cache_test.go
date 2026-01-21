@@ -507,7 +507,9 @@ func TestMemoryTracking(t *testing.T) {
 	stats := cache.GetStats()
 
 	// Calculate expected size
-	expectedSize := int64(len(data) + len(etag) + len(lastMod) + 24) // +24 for time.Time
+	// ContentHash is SHA256 hex string = 64 chars
+	contentHashLen := 64
+	expectedSize := int64(len(data) + len(etag) + len(lastMod) + contentHashLen + 24) // +24 for time.Time
 
 	if stats.Memory != expectedSize {
 		t.Errorf("Memory = %d, want %d", stats.Memory, expectedSize)
@@ -519,7 +521,7 @@ func TestMemoryTracking(t *testing.T) {
 	cache.Set(key2, data2, 5*time.Minute, "", "")
 
 	stats = cache.GetStats()
-	expectedSize2 := int64(len(data2) + 24)
+	expectedSize2 := int64(len(data2) + contentHashLen + 24)
 	totalExpected := expectedSize + expectedSize2
 
 	if stats.Memory != totalExpected {

@@ -120,6 +120,11 @@ func (e *Event) GetField(fieldName string) string {
 
 // Serialize converts a Calendar back to iCal format
 func (c *Calendar) Serialize(w io.Writer) error {
+	return c.SerializeWithName(w, "")
+}
+
+// SerializeWithName converts a Calendar back to iCal format with an optional calendar name
+func (c *Calendar) SerializeWithName(w io.Writer, calendarName string) error {
 	// Create a new calendar with the same properties as the original
 	outCal := ical.NewCalendar()
 
@@ -131,6 +136,11 @@ func (c *Calendar) Serialize(w io.Writer) error {
 		// Set default properties if we don't have the raw calendar
 		outCal.Props.SetText(ical.PropVersion, "2.0")
 		outCal.Props.SetText(ical.PropProductID, "-//ReCal//EN")
+	}
+
+	// Set calendar name if provided (overrides any existing X-WR-CALNAME)
+	if calendarName != "" {
+		outCal.Props.SetText("X-WR-CALNAME", calendarName)
 	}
 
 	// Add all events
