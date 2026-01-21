@@ -212,10 +212,10 @@ jobs:
             exit 1
           }
 
-          # Test filter preview mode
-          echo "Testing filter preview mode..."
-          curl -f "http://localhost:8080/query/preview?Grad=3" > preview.html || {
-            echo "Filter preview mode failed"
+          # Test filter debug mode
+          echo "Testing filter debug mode..."
+          curl -f "http://localhost:8080/query/debug?Grad=3" > debug.html || {
+            echo "Filter debug mode failed"
             docker logs test-container
             docker stop test-container
             docker rm test-container
@@ -223,10 +223,10 @@ jobs:
             exit 1
           }
 
-          # Verify preview output contains expected content
-          grep -q "Summary Statistics" preview.html || {
-            echo "Preview output missing expected content"
-            cat preview.html
+          # Verify debug output contains expected content
+          grep -q "Summary Statistics" debug.html || {
+            echo "Debug output missing expected content"
+            cat debug.html
             docker stop test-container
             docker rm test-container
             kill $HTTP_SERVER_PID
