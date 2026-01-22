@@ -1,8 +1,11 @@
 package cache
 
 import (
+	"bufio"
+	"bytes"
 	"crypto/sha256"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 )
@@ -119,8 +122,14 @@ func (c *Cache) Set(key string, data []byte, ttl time.Duration, etag string, las
 	}
 
 	// Compute content hash for change detection
-	h := sha256.Sum256(data)
-	contentHash := fmt.Sprintf("%x", h)
+	// Use normalized iCal hash if data looks like iCal, otherwise use raw hash
+	var contentHash string
+	if len(data) > 15 && string(data[:15]) == "BEGIN:VCALENDAR" {
+		contentHash = HashICalContent(data)
+	} else {
+		h := sha256.Sum256(data)
+		contentHash = fmt.Sprintf("%x", h)
+	}
 
 	newEntry := &Entry{
 		Data:         data,
@@ -316,4 +325,58 @@ func HashKey(components ...string) string {
 		h.Write([]byte{0}) // Separator to prevent collisions
 	}
 	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+// volatileICalFields are iCal properties that change between fetches even when the
+// actual calendar content hasn't changed. These are excluded from content hashing.
+var volatileICalFields = map[string]bool{
+	"DTSTAMP":       true, // Timestamp of when the component was created/modified by the server
+	"LAST-MODIFIED": true, // Last modification time (often server-generated)
+	"CREATED":       true, // Creation time (sometimes dynamic)
+	"X-WR-CALDESC":  true, // Calendar description (may include timestamps)
+}
+
+// NormalizeICalForHashing removes volatile fields from iCal data before hashing.
+// This ensures that content hashes remain stable when the actual events haven't changed,
+// even if the server includes different timestamps on each response (like Google Calendar).
+func NormalizeICalForHashing(data []byte) []byte {
+	var result bytes.Buffer
+	scanner := bufio.NewScanner(bytes.NewReader(data))
+
+	// Handle long lines (some scanners have limits)
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, 1024*1024) // 1MB max line
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Check if this line starts a volatile field
+		// iCal properties are in format: PROPERTY:VALUE or PROPERTY;PARAM=VALUE:VALUE
+		colonIdx := strings.Index(line, ":")
+		if colonIdx > 0 {
+			propPart := line[:colonIdx]
+			// Handle parameters (e.g., "DTSTAMP;VALUE=DATE-TIME")
+			semiIdx := strings.Index(propPart, ";")
+			propName := propPart
+			if semiIdx > 0 {
+				propName = propPart[:semiIdx]
+			}
+
+			if volatileICalFields[strings.ToUpper(propName)] {
+				continue // Skip this line
+			}
+		}
+
+		result.WriteString(line)
+		result.WriteByte('\n')
+	}
+
+	return result.Bytes()
+}
+
+// HashICalContent computes a stable hash of iCal content, ignoring volatile fields.
+func HashICalContent(data []byte) string {
+	normalized := NormalizeICalForHashing(data)
+	h := sha256.Sum256(normalized)
+	return fmt.Sprintf("%x", h)
 }

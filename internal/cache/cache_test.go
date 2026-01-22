@@ -797,3 +797,105 @@ func TestClearResetsMemory(t *testing.T) {
 		t.Errorf("Memory = %d after Clear, want 0", stats.Memory)
 	}
 }
+
+// TestNormalizeICalForHashing tests that volatile fields are stripped from iCal
+func TestNormalizeICalForHashing(t *testing.T) {
+	// Two iCal files that differ only in DTSTAMP should produce same hash
+	ical1 := []byte(`BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:test@example.com
+DTSTART:20250115T100000Z
+DTEND:20250115T110000Z
+DTSTAMP:20250115T120000Z
+LAST-MODIFIED:20250115T090000Z
+SUMMARY:Test Event
+END:VEVENT
+END:VCALENDAR
+`)
+
+	ical2 := []byte(`BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:test@example.com
+DTSTART:20250115T100000Z
+DTEND:20250115T110000Z
+DTSTAMP:20250116T080000Z
+LAST-MODIFIED:20250116T070000Z
+SUMMARY:Test Event
+END:VEVENT
+END:VCALENDAR
+`)
+
+	hash1 := HashICalContent(ical1)
+	hash2 := HashICalContent(ical2)
+
+	if hash1 != hash2 {
+		t.Errorf("HashICalContent produced different hashes for iCal files that only differ in volatile fields:\nhash1=%s\nhash2=%s", hash1, hash2)
+	}
+
+	// Different event content should produce different hash
+	ical3 := []byte(`BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:test@example.com
+DTSTART:20250115T100000Z
+DTEND:20250115T110000Z
+DTSTAMP:20250116T080000Z
+SUMMARY:Different Event
+END:VEVENT
+END:VCALENDAR
+`)
+
+	hash3 := HashICalContent(ical3)
+	if hash1 == hash3 {
+		t.Error("HashICalContent produced same hash for iCal files with different content")
+	}
+}
+
+// TestICalContentHashInCache tests that cache uses normalized hash for iCal
+func TestICalContentHashInCache(t *testing.T) {
+	cache := NewCache(10, 5*time.Minute, 1*time.Minute)
+
+	// Store an iCal file
+	ical1 := []byte(`BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:test@example.com
+DTSTART:20250115T100000Z
+SUMMARY:Test Event
+DTSTAMP:20250115T120000Z
+END:VEVENT
+END:VCALENDAR
+`)
+	cache.Set("key1", ical1, 5*time.Minute, "", "")
+
+	// Get the content hash
+	hash1, ok := cache.GetContentHash("key1")
+	if !ok {
+		t.Fatal("GetContentHash failed")
+	}
+
+	// Store same calendar with different DTSTAMP
+	ical2 := []byte(`BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:test@example.com
+DTSTART:20250115T100000Z
+SUMMARY:Test Event
+DTSTAMP:20250116T080000Z
+END:VEVENT
+END:VCALENDAR
+`)
+	cache.Set("key2", ical2, 5*time.Minute, "", "")
+
+	hash2, ok := cache.GetContentHash("key2")
+	if !ok {
+		t.Fatal("GetContentHash failed for key2")
+	}
+
+	// Content hashes should be the same
+	if hash1 != hash2 {
+		t.Errorf("Cache content hash changed for iCal with only DTSTAMP difference:\nhash1=%s\nhash2=%s", hash1, hash2)
+	}
+}

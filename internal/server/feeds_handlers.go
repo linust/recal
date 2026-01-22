@@ -573,9 +573,10 @@ func (s *Server) AdminListFeeds(w http.ResponseWriter, r *http.Request) {
 	if searchQuery != "" {
 		searchLower := strings.ToLower(searchQuery)
 		for _, feed := range allFeeds {
-			// Search in description and filter values
+			// Search in description, slug, and owner
 			if strings.Contains(strings.ToLower(feed.Description), searchLower) ||
-				strings.Contains(strings.ToLower(feed.Slug), searchLower) {
+				strings.Contains(strings.ToLower(feed.Slug), searchLower) ||
+				strings.Contains(strings.ToLower(feed.Owner), searchLower) {
 				filteredFeeds = append(filteredFeeds, feed)
 				continue
 			}
